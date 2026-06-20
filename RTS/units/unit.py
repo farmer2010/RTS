@@ -77,20 +77,6 @@ class Unit(Entity):
             (1, -1): 1.75 * math.pi,
         }
         if self.path_index < len(self.path):
-            '''rdx = int((self.path[self.path_index][0] * 16 + 8) - self.pos[0])
-            rdy = int((self.path[self.path_index][1] * 16 + 8) - self.pos[1])
-            print([(self.path[self.path_index][0] * 16 + 8), (self.path[self.path_index][1] * 16 + 8)], (rdx, rdy), self.pos)
-            dx, dy = 0, 0
-            if rdx != 0:
-                dx = rdx / abs(rdx)
-            if rdy != 0:
-                dy = rdy / abs(rdy)
-            if rdx < self.speed/2 and rdx > -self.speed/2 and rdy < self.speed/2 and rdy > -self.speed/2:
-                self.path_index += 1
-                return
-            else:
-                rotate = moves[(int(dx), int(dy))]'''
-            #
             if self.path_index < len(self.path):
                 if self.path_index > 0:
                     dx = int(self.path[self.path_index][0] - self.path[self.path_index - 1][0])
@@ -106,8 +92,15 @@ class Unit(Entity):
                     else:
                         self.move(self.speed, rotate)
                 else:
-                    self.pos = [self.path[self.path_index][0] * 16 + 8, self.path[self.path_index][1] * 16 + 8]
-                    self.path_index += 1
+                    if self.pos[0] > self.path[self.path_index][0] * 16 + 8 - self.speed / 2 and \
+                            self.pos[0] < self.path[self.path_index][0] * 16 + 8 + self.speed / 2 and \
+                            self.pos[1] > self.path[self.path_index][1] * 16 + 8 - self.speed / 2 and \
+                            self.pos[1] < self.path[self.path_index][1] * 16 + 8 + self.speed / 2:
+                        self.pos = [self.path[self.path_index][0] * 16 + 8, self.path[self.path_index][1] * 16 + 8]
+                        self.path_index += 1
+                    else:
+                        rotate = math.atan2(self.path[self.path_index][1] * 16 + 8 - self.pos[1], self.path[self.path_index][0] * 16 + 8 - self.pos[0])
+                        self.move(self.speed, rotate)
 
     def pathfind(self, start_pos, end_pos):
         field = self.world.field
@@ -234,12 +227,3 @@ class Unit(Entity):
             return False
         # Диагональ разрешена, если хотя бы одна из прямых клеток свободна
         return (field[h_x][h_y].has_hitbox == 0) and (field[v_x][v_y].has_hitbox == 0)  # можно заменить or на and
-
-    def draw(self, screen):
-        pos = [
-            round((self.pos[0] - self.world.cam_pos[0] - self.w/2) * self.world.zoom + self.world.display_W / 2),
-            round((self.pos[1] - self.world.cam_pos[1] - self.h/2) * self.world.zoom + self.world.display_H / 2)
-        ]
-        screen.blit(pygame.transform.scale(self.image, (self.w * self.world.zoom, self.h * self.world.zoom)), pos)
-        img = font.render(str(self.path_index), True, (0, 0, 0))
-        screen.blit(img, pos)
