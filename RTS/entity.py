@@ -2,14 +2,15 @@ import pygame
 import math
 
 class Entity():
-    def __init__(self, world, type, pos, w, h):
+    def __init__(self, world, player, _class, pos, w, h):
         self.world = world
-        self.type = type
+        self._class = _class
         self.pos = pos
         self.w = w
         self.h = h
         self.image = pygame.Surface((self.w, self.h))
         self.killed = 0
+        self.player = player
 
     def update(self, events):
         pass
@@ -65,9 +66,9 @@ class Entity():
             lpos = -9999
         elif spx == -1 or spy == -1:
             lpos = 99999999999
-        if self.type != "bullet":
+        if self._class != "bullet":
             for obj in self.world.objects:#с другими юнитами
-                if self.entity_collide(obj) and obj.type != "bullet":
+                if self.entity_collide(obj) and obj._class != "bullet":
                     if spx == 0 and spy == 0:
                         return (1, obj.pos[0] + obj.w / 2 * spx, obj.pos[1] + obj.h / 2 * spy)
                     if spx == 1:#влево

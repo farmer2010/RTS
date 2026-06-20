@@ -113,7 +113,7 @@ class TextFieldMain(Component):#основа text_field. используетс�
         #
         if self.input_manager.mouse_connect_object[0] == self:
             for event in events:
-                if event.type == pygame.KEYDOWN:
+                if event._class == pygame.KEYDOWN:
                     if event.key == pygame.K_LEFT and self.cursor >= 1:
                         self.cursor -= 1
                     if event.key == pygame.K_RIGHT and self.cursor < len(self.text):

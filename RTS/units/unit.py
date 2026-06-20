@@ -8,11 +8,12 @@ import heapq
 font = pygame.font.SysFont(None, 40)
 
 class Unit(Entity):
-    def __init__(self, world, pos, w, h):
-        Entity.__init__(self, world, "unit", pos, w, h)
+    def __init__(self, world, player, pos, w, h):
+        Entity.__init__(self, world, player, "unit", pos, w, h)
         self.speed = 3
         self.path = []
         self.path_index = 0
+        self.target = None
         self.image.fill((255, 0, 0))
 
     def update(self, events):

@@ -90,7 +90,7 @@ class TextBox(Component):
                         self.onsubmit()
         if self.input_manager.mouse_connect_object[0] == self:
             for event in events:
-                if event.type == pygame.KEYDOWN:
+                if event._class == pygame.KEYDOWN:
                     if event.key == pygame.K_LEFT and self.cursor_pos >= 1:
                         self.cursor_pos -= 1
                     if event.key == pygame.K_RIGHT and self.cursor_pos < len(self.text):

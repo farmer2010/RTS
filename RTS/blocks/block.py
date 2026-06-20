@@ -3,6 +3,7 @@ import math
 
 class Block():
     def __init__(self, world, pos):
+        self._class = "block"
         self.world = world
         self.pos = pos
         self.world.field[pos[0]][pos[1]] = self
