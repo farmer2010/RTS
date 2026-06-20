@@ -26,7 +26,7 @@ class World(Panel):
         #
         self.objects = []
         self.players = [UserPlayer(self), AiPlayer(self)]
-        self.selfplayer = self.players[0]#игрок - пользователь
+        self.player = self.players[0]#игрок - пользователь
         #
         self.action_type = None
         self.action_pos = [0, 0]
@@ -111,20 +111,29 @@ class World(Panel):
         for event in events:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_1:
-                    pos = [
-                        (self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) / self.zoom,
-                        (self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) / self.zoom
-                    ]
-                    self.objects.append(Unit(self, self.selfplayer, pos, 30, 30))
-                if event.key == pygame.K_f:
-                    self.action_pos = [
-                        (self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) / self.zoom,
-                        (self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) / self.zoom
-                    ]
-                    self.action_type = "units"
+                    self.objects.append(Unit(self, self.player, self.display_to_game(mousepos), 30, 30))
+                if self.action_type == None:
+                    if event.key == pygame.K_f:
+                        self.action_pos = self.display_to_game(mousepos)
+                        self.action_type = "units"
             if event.type == pygame.KEYUP:
-                if event.key == pygame.K_f:
+                if event.key == pygame.K_f and self.action_type == "units":
                     self.action_type = None
+                    self.player.selected_units = []
+                    for obj in self.objects:
+                        if obj._class == "unit" and obj.player == self.player:
+                            pos = self.display_to_game(mousepos)
+                            corn_pos = [#позиция левого верхнего угла выделения
+                                pos[0] if self.action_pos[0] - pos[0] >= 0 else self.action_pos[0],
+                                pos[1] if self.action_pos[1] - pos[1] >= 0 else self.action_pos[1]
+                            ]
+                            corn_pos2 = [#позиция правого нижнего угла выделения
+                                pos[0] if self.action_pos[0] - pos[0] < 0 else self.action_pos[0],
+                                pos[1] if self.action_pos[1] - pos[1] < 0 else self.action_pos[1]
+                            ]
+                            if obj.pos[0] > corn_pos[0] - obj.w/2 and obj.pos[0] < corn_pos2[0] + obj.w/2 and \
+                                    obj.pos[1] > corn_pos[1] - obj.h/2 and obj.pos[1] < corn_pos2[1] + obj.h/2:
+                                self.player.selected_units.append(obj)
         #
         #ДЕЙСТВИЯ ИГРОКА
         #
@@ -153,10 +162,7 @@ class World(Panel):
             obj.draw(screen)
         #
         if self.action_type != None:
-            pos = [
-                round((self.action_pos[0] - self.cam_pos[0]) * self.zoom + self.display_W / 2),
-                round((self.action_pos[1] - self.cam_pos[1]) * self.zoom + self.display_H / 2)
-            ]
+            pos = self.game_to_display(self.action_pos)
             img = pygame.Surface((abs(mousepos[0] - pos[0]), abs(mousepos[1] - pos[1])), pygame.SRCALPHA)
             if self.action_type == "units":
                 img.fill((255, 128, 0, 128))
@@ -166,4 +172,17 @@ class World(Panel):
         utils.render_text(str(self.zoom), (0, 25), screen, color=(255, 0, 0))
         utils.render_text(str(d), (0, 50), screen, color=(255, 0, 0))
         utils.render_text(str(self.cam_pos), (0, 75), screen, color=(255, 0, 0))
-        utils.render_text(str(self.action_pos), (0, 100), screen, color=(255, 0, 0))
+
+    def display_to_game(self, disp_pos):#перевод экранных координат в игровые
+        pos = [
+            (self.cam_pos[0] * self.zoom - self.display_W / 2 + disp_pos[0]) / self.zoom,
+            (self.cam_pos[1] * self.zoom - self.display_H / 2 + disp_pos[1]) / self.zoom
+        ]
+        return(pos)
+
+    def game_to_display(self, game_pos):#перевод игровых координат в экранные
+        pos = [
+            round((game_pos[0] - self.cam_pos[0]) * self.zoom + self.display_W / 2),
+            round((game_pos[1] - self.cam_pos[1]) * self.zoom + self.display_H / 2)
+        ]
+        return(pos)

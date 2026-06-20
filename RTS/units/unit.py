@@ -14,6 +14,7 @@ class Unit(Entity):
         self.path = []
         self.path_index = 0
         self.target = None
+        self.player.units.append(self)
         self.image.fill((255, 0, 0))
 
     def update(self, events):
@@ -60,10 +61,7 @@ class Unit(Entity):
                         self.move(self.speed, 0.25 * math.pi)
         #if rand(0, 1) == 0:
         #    mousepos = pygame.mouse.get_pos()
-        #    pos = [
-        #        (self.world.cam_pos[0] * self.world.zoom - self.world.display_W / 2 + mousepos[0]) / self.world.zoom,
-        #        (self.world.cam_pos[1] * self.world.zoom - self.world.display_H / 2 + mousepos[1]) / self.world.zoom
-        #    ]
+        #    pos = self.world.display_to_game(mousepos)
         #    self.world.objects.append(Projectile(self.world, self.pos.copy(), 10, 10, math.atan2(pos[1] - self.pos[1], pos[0] - self.pos[0]), 5, 240))
 
     def move_path(self):
@@ -228,3 +226,12 @@ class Unit(Entity):
             return False
         # Диагональ разрешена, если хотя бы одна из прямых клеток свободна
         return (field[h_x][h_y].has_hitbox == 0) and (field[v_x][v_y].has_hitbox == 0)  # можно заменить or на and
+
+    def draw(self, screen):
+        pos = [
+            round((self.pos[0] - self.world.cam_pos[0] - self.w / 2) * self.world.zoom + self.world.display_W / 2),
+            round((self.pos[1] - self.world.cam_pos[1] - self.h / 2) * self.world.zoom + self.world.display_H / 2)
+        ]
+        screen.blit(pygame.transform.scale(self.image, (self.w * self.world.zoom, self.h * self.world.zoom)), pos)
+        if self in self.player.selected_units:
+            pygame.draw.circle(screen, (255, 255, 0), pos, 10 * self.world.zoom)

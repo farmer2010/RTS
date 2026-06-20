@@ -1,7 +1,8 @@
 class Player():
     def __init__(self, world):
         self.world = world
-        self.units = []
+        self.units = []#все юниты игрока
+        self.selected_units = []#выделенные юниты игрока
         self.fog = [[0 for y in range(self.world.h)] for x in range(self.world.w)]#0 - туман, 1 - неактивная область, 2 - активная область
 
     def update(self, events):
