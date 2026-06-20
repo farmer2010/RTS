@@ -5,6 +5,8 @@ from random import randint as rand
 from projectiles.projectile import *
 import heapq
 
+font = pygame.font.SysFont(None, 40)
+
 class Unit(Entity):
     def __init__(self, world, pos, w, h):
         Entity.__init__(self, world, "unit", pos, w, h)
@@ -23,8 +25,7 @@ class Unit(Entity):
                         (self.world.cam_pos[1] * self.world.zoom - self.world.display_H / 2 + mousepos[1]) / self.world.zoom
                     ]
                     self.path = self.pathfind((int(self.pos[0] // 16), int(self.pos[1] // 16)), (int(pos[0] // 16), int(pos[1] // 16)))
-                    self.path_index = 1
-                    print(self.path)
+                    self.path_index = 0
         self.move_path()
         keys = pygame.key.get_pressed()
         move_keys = [
@@ -75,20 +76,38 @@ class Unit(Entity):
             (0, -1) : 1.5 * math.pi,
             (1, -1): 1.75 * math.pi,
         }
-        print(len(self.path), self.path_index)
         if self.path_index < len(self.path):
-            dx = int(self.path[self.path_index][0] - self.path[self.path_index - 1][0])
-            dy = int(self.path[self.path_index][1] - self.path[self.path_index - 1][1])
-            rotate = moves[(dx, dy)]
-            #
-            if  self.pos[0] > self.path[self.path_index][0] * 16 + 8 - self.speed/2 and \
-                self.pos[0] < self.path[self.path_index][0] * 16 + 8 + self.speed/2 and \
-                self.pos[1] > self.path[self.path_index][1] * 16 + 8 - self.speed/2 and \
-                self.pos[1] < self.path[self.path_index][1] * 16 + 8 + self.speed/2:
-                self.pos = [self.path[self.path_index][0] * 16 + 8, self.path[self.path_index][1] * 16 + 8]
+            '''rdx = int((self.path[self.path_index][0] * 16 + 8) - self.pos[0])
+            rdy = int((self.path[self.path_index][1] * 16 + 8) - self.pos[1])
+            print([(self.path[self.path_index][0] * 16 + 8), (self.path[self.path_index][1] * 16 + 8)], (rdx, rdy), self.pos)
+            dx, dy = 0, 0
+            if rdx != 0:
+                dx = rdx / abs(rdx)
+            if rdy != 0:
+                dy = rdy / abs(rdy)
+            if rdx < self.speed/2 and rdx > -self.speed/2 and rdy < self.speed/2 and rdy > -self.speed/2:
                 self.path_index += 1
+                return
             else:
-                self.move(self.speed, rotate)
+                rotate = moves[(int(dx), int(dy))]'''
+            #
+            if self.path_index < len(self.path):
+                if self.path_index > 0:
+                    dx = int(self.path[self.path_index][0] - self.path[self.path_index - 1][0])
+                    dy = int(self.path[self.path_index][1] - self.path[self.path_index - 1][1])
+                    rotate = moves[(dx, dy)]
+                    #
+                    if self.pos[0] > self.path[self.path_index][0] * 16 + 8 - self.speed / 2 and \
+                            self.pos[0] < self.path[self.path_index][0] * 16 + 8 + self.speed / 2 and \
+                            self.pos[1] > self.path[self.path_index][1] * 16 + 8 - self.speed / 2 and \
+                            self.pos[1] < self.path[self.path_index][1] * 16 + 8 + self.speed / 2:
+                        self.pos = [self.path[self.path_index][0] * 16 + 8, self.path[self.path_index][1] * 16 + 8]
+                        self.path_index += 1
+                    else:
+                        self.move(self.speed, rotate)
+                else:
+                    self.pos = [self.path[self.path_index][0] * 16 + 8, self.path[self.path_index][1] * 16 + 8]
+                    self.path_index += 1
 
     def pathfind(self, start_pos, end_pos):
         field = self.world.field
@@ -177,7 +196,7 @@ class Unit(Entity):
         # Путь не найден
         return []
 
-    def heuristic(self, a, b):  # Эвристическая функция (расстояние Чебышева с учётом диагоналей)
+    def heuristic(self, a, b):#Эвристическая функция (расстояние Чебышева с учётом диагоналей)
         dx = abs(a[0] - b[0])
         dy = abs(a[1] - b[1])
         return 1.41 * min(dx, dy) + abs(dx - dy)
@@ -215,3 +234,12 @@ class Unit(Entity):
             return False
         # Диагональ разрешена, если хотя бы одна из прямых клеток свободна
         return (field[h_x][h_y].has_hitbox == 0) and (field[v_x][v_y].has_hitbox == 0)  # можно заменить or на and
+
+    def draw(self, screen):
+        pos = [
+            round((self.pos[0] - self.world.cam_pos[0] - self.w/2) * self.world.zoom + self.world.display_W / 2),
+            round((self.pos[1] - self.world.cam_pos[1] - self.h/2) * self.world.zoom + self.world.display_H / 2)
+        ]
+        screen.blit(pygame.transform.scale(self.image, (self.w * self.world.zoom, self.h * self.world.zoom)), pos)
+        img = font.render(str(self.path_index), True, (0, 0, 0))
+        screen.blit(img, pos)
