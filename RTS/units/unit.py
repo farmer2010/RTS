@@ -18,11 +18,10 @@ class Unit(Entity):
         self.player.units.append(self)
         self.image.fill((255, 0, 0))
         self.timer = 0
+        self.fog_radius = 15
         #
-        for x in range(int((self.pos[0] - self.w/2) // 16), int((self.pos[0] + self.w/2) // 16) + 1):
-            for y in range(int((self.pos[1] - self.h/2) // 16), int((self.pos[1] + self.h/2) // 16) + 1):
-                if x >= 0 and x < self.world.w and y >= 0 and y < self.world.h:
-                    self.world.unit_field[x][y].append(self)
+        self.update_unit_field("add")
+        self.update_fog("add", [self.pos[0] // 16, self.pos[1] // 16])
 
     def update(self, events):
         for event in events:
@@ -30,13 +29,14 @@ class Unit(Entity):
                 if event.key == pygame.K_g and self in self.player.selected_units:
                     mousepos = pygame.mouse.get_pos()
                     pos = [
-                        (self.world.cam_pos[0] * self.world.zoom - self.world.display_W / 2 + mousepos[0]) / self.world.zoom,
-                        (self.world.cam_pos[1] * self.world.zoom - self.world.display_H / 2 + mousepos[1]) / self.world.zoom
+                        int((self.world.cam_pos[0] * self.world.zoom - self.world.display_W / 2 + mousepos[0]) / self.world.zoom / 16),
+                        int((self.world.cam_pos[1] * self.world.zoom - self.world.display_H / 2 + mousepos[1]) / self.world.zoom / 16)
                     ]
-                    self.path = self.pathfind((int((self.pos[0] - self.w/2) // 16), int((self.pos[1] - self.h/2) // 16)), (int(pos[0] // 16), int(pos[1] // 16)))
-                    self.path_index = 1
-                    if len(self.path) > 0:
-                        self.command = [int(pos[0] // 16), int(pos[1] // 16)]
+                    if self.world.test_for_block_pos(pos):
+                        self.path = self.pathfind((int((self.pos[0] - self.w/2) // 16), int((self.pos[1] - self.h/2) // 16)), (pos[0], pos[1]))
+                        self.path_index = 1
+                        if len(self.path) > 0:
+                            self.command = [pos[0], pos[1]]
                 if event.key == pygame.K_SPACE and self in self.player.selected_units:
                     mousepos = pygame.mouse.get_pos()
                     pos = self.world.display_to_game(mousepos)
@@ -50,8 +50,8 @@ class Unit(Entity):
             keys[pygame.K_LEFT]
         ]
         if sum(move_keys) > 0 and self in self.player.selected_units:
-            #self.path = []
-            #self.command = None
+            self.path = []
+            self.command = None
             if move_keys[1] + move_keys[3] == 0:
                 if move_keys[0]:
                     self.move(self.speed, 1.5 * math.pi)
@@ -76,6 +76,57 @@ class Unit(Entity):
         #
         self.timer = 1
 
+    def update_fog(self, func, pos):
+        for x in range(int(pos[0] - self.fog_radius), int(pos[0] + self.fog_radius + 1)):
+            for y in range(int(pos[1] - self.fog_radius), int(pos[1] + self.fog_radius + 1)):
+                if self.world.test_for_block_pos((x, y)) and (pos[0] - x) ** 2 + (pos[1] - y) ** 2 <= self.fog_radius ** 2:
+                    if func == "remove":
+                        if self in self.player.fog_units[x][y]:
+                            self.player.fog_units[x][y].remove(self)
+                        if len(self.player.fog_units[x][y]) == 0:
+                            self.player.fog[x][y] = 0
+                    elif func == "add":
+                        if self not in self.player.fog_units[x][y]:
+                            self.player.fog_units[x][y].append(self)
+                        if self in self.player.fog_units[x][y]:
+                            self.player.fog[x][y] = 2
+        #
+        count = [math.ceil(self.fog_radius * 2 / 16), math.ceil(self.fog_radius * 2 / 16)]  # количество видимых чанков
+        for x in range(int(self.pos[0] / 256 - count[0] / 2), int(self.pos[0] / 256 + count[0] / 2) + 1):
+            for y in range(int(self.pos[1] / 256 - count[1] / 2), int(self.pos[1] / 256 + count[1] / 2) + 1):
+                if x >= 0 and x < self.world.ch_w and y >= 0 and y < self.world.ch_h:
+                    self.world.chunks[x][y].update_image()
+
+    def update_unit_field(self, func):
+        for x in range(int((self.pos[0] - self.w/2) // 16), int((self.pos[0] + self.w/2) // 16) + 1):
+            for y in range(int((self.pos[1] - self.h/2) // 16), int((self.pos[1] + self.h/2) // 16) + 1):
+                if self.world.test_for_block_pos((x, y)):
+                    if func == "remove":
+                        self.world.unit_field[x][y].remove(self)
+                    elif func == "add":
+                        self.world.unit_field[x][y].append(self)
+
+    def kill(self):
+        Entity.kill(self)
+        #
+        self.update_unit_field("add")
+        self.update_fog("remove", [self.pos[0] // 16, self.pos[1] // 16])
+        #
+        if self in self.player.selected_units:
+            self.player.selected_units.remove(self)
+        self.player.units.remove(self)
+
+    def move(self, speed, rotate):
+        self.update_unit_field("remove")
+        pos = [self.pos[0] // 16, self.pos[1] // 16]
+        mov = Entity.move(self, speed, rotate)
+        new_pos = [self.pos[0] // 16, self.pos[1] // 16]
+        if new_pos != pos:
+            self.update_fog("remove", pos)
+            self.update_fog("add", new_pos)
+        self.update_unit_field("add")
+        return(mov)
+
     def move_path(self):
         if self.path_index < len(self.path):
             if self.path_index >= 0:
@@ -86,8 +137,6 @@ class Unit(Entity):
                         self.pos[1] > self.path[self.path_index][1] * 16 + 16 - self.speed and \
                         self.pos[1] < self.path[self.path_index][1] * 16 + 16 + self.speed:
                     self.path_index += 1
-                    #self.path = self.path = self.pathfind((int((self.pos[0] - self.w/2) // 16), int((self.pos[1] - self.h/2) // 16)), (self.command[0], self.command[1]))
-                    #self.path_index = 1
                 collide = self.move(self.speed, rotate)
                 if collide:
                     self.path = self.pathfind((int((self.pos[0] - self.w/2) // 16), int((self.pos[1] - self.h/2) // 16)), (self.command[0], self.command[1]))
@@ -191,8 +240,8 @@ class Unit(Entity):
         for x in range(pos[0], pos[0] + count[0]):
             for y in range(pos[1], pos[1] + count[1]):
                 if x >= 0 and x < len(self.world.field) and y >= 0 and y < len(self.world.field[0]):
-                    #if self.world.field[x][y].has_hitbox or (len(self.world.unit_field[x][y]) > 0 and self not in self.world.unit_field[x][y]):
-                    if self.world.field[x][y].has_hitbox:
+                    if self.world.field[x][y].has_hitbox or (len(self.world.unit_field[x][y]) > 0 and self not in self.world.unit_field[x][y]):
+                    #if self.world.field[x][y].has_hitbox:
                         return(0)
                 else:
                     return(0)

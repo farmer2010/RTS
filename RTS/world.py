@@ -16,7 +16,7 @@ class World(Panel):
         self.h = h * 16
         self.zoom = 3
         self.min_zoom = 1
-        self.max_zoom = 10
+        self.max_zoom = 6
         self.cam_pos = [w * 256 / 2, h * 256 / 2]#позиция центра камеры
         self.cam_speed = 5
         self.display_W = pygame.display.Info().current_w
@@ -91,7 +91,8 @@ class World(Panel):
             if wheel != 0:
                 self.zoom_timer = 20
                 self.zoom_speed = (max(min(self.zoom + wheel, self.max_zoom), self.min_zoom) - self.zoom) / 20
-        self.zoom += self.zoom_speed
+        if self.zoom_timer % 2 == 0:
+            self.zoom += self.zoom_speed * 2
         if self.zoom_timer > 0:
             self.zoom_timer -= 1
         #
@@ -100,7 +101,7 @@ class World(Panel):
                 int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) // (16 * self.zoom)),
                 int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) // (16 * self.zoom))
             ]
-            if blockpos[0] >= 0 and blockpos[0] < self.w and blockpos[1] >= 0 and blockpos[1] < self.h:
+            if self.test_for_block_pos(blockpos):
                 self.field[blockpos[0]][blockpos[1]] = Stone(self, blockpos)
                 self.chunks[blockpos[0] // 16][blockpos[1] // 16].update_image()
         #
@@ -109,7 +110,7 @@ class World(Panel):
                 int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) // (16 * self.zoom)),
                 int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) // (16 * self.zoom))
             ]
-            if blockpos[0] >= 0 and blockpos[0] < self.w and blockpos[1] >= 0 and blockpos[1] < self.h:
+            if self.test_for_block_pos(blockpos):
                 self.field[blockpos[0]][blockpos[1]] = Air(self, blockpos)
                 self.chunks[blockpos[0] // 16][blockpos[1] // 16].update_image()
         #
@@ -178,6 +179,11 @@ class World(Panel):
         for obj in self.objects:
             obj.draw(screen)
         #
+        for x in range(int(self.cam_pos[0] / 256 - count[0] / 2), int(self.cam_pos[0] / 256 + count[0] / 2) + 1):
+            for y in range(int(self.cam_pos[1] / 256 - count[1] / 2), int(self.cam_pos[1] / 256 + count[1] / 2) + 1):
+                if x >= 0 and x < self.ch_w and y >= 0 and y < self.ch_h:
+                    screen.blit(self.chunks[x][y].scaled_fog_image, self.game_to_display((x * 256, y * 256)))
+        #
         if self.action_type != None:
             pos = self.game_to_display(self.action_pos)
             img = pygame.Surface((abs(mousepos[0] - pos[0]), abs(mousepos[1] - pos[1])), pygame.SRCALPHA)
@@ -206,3 +212,9 @@ class World(Panel):
             round((game_pos[1] - self.cam_pos[1]) * self.zoom + self.display_H / 2)
         ]
         return(pos)
+
+    def test_for_block_pos(self, pos):
+        return(pos[0] >= 0 and pos[0] < self.w and pos[1] >= 0 and pos[1] < self.h)
+
+    def test_for_pos(self, pos):
+        return(pos[0] >= 0 and pos[0] < self.w * 16 and pos[1] >= 0 and pos[1] < self.h * 16)
