@@ -51,21 +51,27 @@ class Entity():
             self.pos[0] += dx
             collide_x = self.collide((dx < 0)*2-1, 0)
             if collide_x[0]:
-                #if dx > 0.1 or dx < -0.1:
                 coll = 1
                 if dx > 0:
                     self.pos[0] = collide_x[1] - self.w/2
                 elif dx < 0:
                     self.pos[0] = collide_x[1] + self.w/2
+                #
+                if collide_x[3] != None and collide_x[3]._class == "unit" and self._class == "unit":
+                    collide_x[3].move(speed * 0.5, math.atan2(0, dx))
             self.pos[1] += dy
             collide_y = self.collide(0, (dy < 0)*2-1)
             if collide_y[0]:
-                #if dy > 0.1 or dy < -0.1:
                 coll = 1
                 if dy > 0:
                     self.pos[1] = collide_y[2] - self.h/2
                 elif dy < 0:
                     self.pos[1] = collide_y[2] + self.h/2
+                #
+                if collide_y[3] != None and collide_y[3]._class == "unit" and self._class == "unit":
+                    collide_y[3].move(speed * 0.5, math.atan2(dy, 0))
+        else:
+            coll = 1
         #
         if self._class == "unit":
             for x in range(int((self.pos[0] - self.w/2) // 16), int((self.pos[0] + self.w/2) // 16) + 1):
@@ -75,10 +81,17 @@ class Entity():
         return(coll)
 
     def collide(self, spx, spy):#spx, spy: 1 - движется влево, 0 - не движется, -1 - движется вправо
+        """
+        возвращает:
+        было ли столкновение
+        координата x, на которой произошло столкновение
+        координата y, на которой произошло столкновение
+        объект, с которым столкнулись
+        """
         if self.pos[0] < self.w/2 or self.pos[1] < self.h/2:#со стенами
-            return(1, 0, 0)
+            return(1, 0, 0, None)
         if self.pos[0] > self.world.w * 16 - self.w/2 or self.pos[1] > self.world.h * 16 - self.h/2:
-            return(1, self.world.w * 16, self.world.h * 16)
+            return(1, self.world.w * 16, self.world.h * 16, None)
         #
         count = [max(math.ceil(self.w / 16), 2), max(math.ceil(self.h / 16), 2)]#с блоками
         centpos = [int(self.pos[0] // 16), int(self.pos[1] // 16)]
@@ -86,7 +99,7 @@ class Entity():
             for y in range(int(centpos[1] - count[1] / 2), int(centpos[1] + count[1] / 2) + 1, 1):
                 if x >= 0 and x < self.world.w and y >= 0 and y < self.world.h:
                     if self.world.field[x][y].has_hitbox and self.collide_block(x * 16, y * 16):
-                        return(1, x * 16 + 16 * (spx/2+0.5), y * 16 + 16 * (spy/2+0.5))
+                        return(1, x * 16 + 16 * (spx/2+0.5), y * 16 + 16 * (spy/2+0.5), self.world.field[x][y])
         #
         lobj = None
         lpos = 0
@@ -98,7 +111,7 @@ class Entity():
             for obj in self.world.objects:#с другими юнитами
                 if self.entity_collide(obj) and obj._class != "bullet":
                     if spx == 0 and spy == 0:
-                        return (1, obj.pos[0] + obj.w / 2 * spx, obj.pos[1] + obj.h / 2 * spy)
+                        return(1, obj.pos[0] + obj.w / 2 * spx, obj.pos[1] + obj.h / 2 * spy, obj)
                     if spx == 1:#влево
                         if obj.pos[0] > lpos:
                             lpos = obj.pos[0]
@@ -117,8 +130,8 @@ class Entity():
                             lpos = obj.pos[1]
                             lobj = obj
         if lobj != None:
-            return (1, lobj.pos[0] + lobj.w / 2 * spx, lobj.pos[1] + lobj.h / 2 * spy)
-        return(0, 0, 0)
+            return(1, lobj.pos[0] + lobj.w / 2 * spx, lobj.pos[1] + lobj.h / 2 * spy, lobj)
+        return(0, 0, 0, None)
 
     def collide_block(self, bl_x, bl_y):
         if self.pos[0] > bl_x - self.w/2 and self.pos[0] < bl_x + 16 + self.w/2 and self.pos[1] > bl_y - self.h/2 and self.pos[1] < bl_y + 16 + self.h/2:

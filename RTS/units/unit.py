@@ -17,6 +17,7 @@ class Unit(Entity):
         self.command = None
         self.player.units.append(self)
         self.image.fill((255, 0, 0))
+        self.timer = 0
         #
         for x in range(int((self.pos[0] - self.w/2) // 16), int((self.pos[0] + self.w/2) // 16) + 1):
             for y in range(int((self.pos[1] - self.h/2) // 16), int((self.pos[1] + self.h/2) // 16) + 1):
@@ -36,7 +37,7 @@ class Unit(Entity):
                     self.path_index = 0
                     if len(self.path) > 0:
                         self.command = [int(pos[0] // 16), int(pos[1] // 16)]
-                if event.key == pygame.K_SPACE:
+                if event.key == pygame.K_SPACE and self in self.player.selected_units:
                     mousepos = pygame.mouse.get_pos()
                     pos = self.world.display_to_game(mousepos)
                     self.world.objects.append(Projectile(self.world, self.player, self.pos.copy(), 10, 10, math.atan2(pos[1] - self.pos[1], pos[0] - self.pos[0]), 5, 240))
@@ -49,8 +50,8 @@ class Unit(Entity):
             keys[pygame.K_LEFT]
         ]
         if sum(move_keys) > 0 and self in self.player.selected_units:
-            self.path = []
-            self.command = None
+            #self.path = []
+            #self.command = None
             if move_keys[1] + move_keys[3] == 0:
                 if move_keys[0]:
                     self.move(self.speed, 1.5 * math.pi)
@@ -72,22 +73,10 @@ class Unit(Entity):
                         self.move(self.speed, 0.75 * math.pi)
                     elif move_keys[1]:
                         self.move(self.speed, 0.25 * math.pi)
-        #if rand(0, 1) == 0:
-        #    mousepos = pygame.mouse.get_pos()
-        #    pos = self.world.display_to_game(mousepos)
-        #    self.world.objects.append(Projectile(self.world, self.pos.copy(), 10, 10, math.atan2(pos[1] - self.pos[1], pos[0] - self.pos[0]), 5, 240))
+        #
+        self.timer = 1
 
     def move_path(self):
-        moves = {
-            (1, 0) : 0,
-            (1, 1) : 0.25 * math.pi,
-            (0, 1) : 0.5 * math.pi,
-            (-1, 1) : 0.75 * math.pi,
-            (-1, 0) : math.pi,
-            (-1, -1) : 1.25 * math.pi,
-            (0, -1) : 1.5 * math.pi,
-            (1, -1): 1.75 * math.pi
-        }
         if self.path_index < len(self.path):
             if self.path_index >= 0:
                 rotate = math.atan2(self.path[self.path_index][1] * 16 + 16 - self.pos[1], self.path[self.path_index][0] * 16 + 16 - self.pos[0])
@@ -96,15 +85,13 @@ class Unit(Entity):
                         self.pos[0] < self.path[self.path_index][0] * 16 + 16 + self.speed and \
                         self.pos[1] > self.path[self.path_index][1] * 16 + 16 - self.speed and \
                         self.pos[1] < self.path[self.path_index][1] * 16 + 16 + self.speed:
-                    #self.pos = [self.path[self.path_index][0] * 16 + 16, self.path[self.path_index][1] * 16 + 16]
                     self.path_index += 1
-                    self.path = self.path = self.pathfind((int((self.pos[0] - self.w/2) // 16), int((self.pos[1] - self.h/2) // 16)), (self.command[0], self.command[1]))
-                    self.path_index = 1
+                    #self.path = self.path = self.pathfind((int((self.pos[0] - self.w/2) // 16), int((self.pos[1] - self.h/2) // 16)), (self.command[0], self.command[1]))
+                    #self.path_index = 1
                 collide = self.move(self.speed, rotate)
                 if collide:
-                    #self.path = self.pathfind((int((self.pos[0] - self.w/2) // 16), int((self.pos[1] - self.h/2) // 16)), (self.command[0], self.command[1]))
-                    #self.path_index = 0
-                    pass
+                    self.path = self.pathfind((int((self.pos[0] - self.w/2) // 16), int((self.pos[1] - self.h/2) // 16)), (self.command[0], self.command[1]))
+                    self.path_index = 0
                 elif len(self.path) == 0:
                     self.path = self.pathfind((int((self.pos[0] - self.w / 2) // 16), int((self.pos[1] - self.h / 2) // 16)), (self.command[0], self.command[1]))
                     self.path_index = 0
@@ -204,7 +191,8 @@ class Unit(Entity):
         for x in range(pos[0], pos[0] + count[0]):
             for y in range(pos[1], pos[1] + count[1]):
                 if x >= 0 and x < len(self.world.field) and y >= 0 and y < len(self.world.field[0]):
-                    if self.world.field[x][y].has_hitbox or (len(self.world.unit_field[x][y]) > 0 and self not in self.world.unit_field[x][y]):
+                    #if self.world.field[x][y].has_hitbox or (len(self.world.unit_field[x][y]) > 0 and self not in self.world.unit_field[x][y]):
+                    if self.world.field[x][y].has_hitbox:
                         return(0)
                 else:
                     return(0)
