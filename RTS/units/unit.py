@@ -28,6 +28,10 @@ class Unit(Entity):
                     ]
                     self.path = self.pathfind((int(self.pos[0] // 16), int(self.pos[1] // 16)), (int(pos[0] // 16), int(pos[1] // 16)))
                     self.path_index = 0
+                if event.key == pygame.K_SPACE:
+                    mousepos = pygame.mouse.get_pos()
+                    pos = self.world.display_to_game(mousepos)
+                    self.world.objects.append(Projectile(self.world, self.player, self.pos.copy(), 10, 10, math.atan2(pos[1] - self.pos[1], pos[0] - self.pos[0]), 5, 240))
         self.move_path()
         keys = pygame.key.get_pressed()
         move_keys = [

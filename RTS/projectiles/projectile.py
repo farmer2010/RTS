@@ -2,8 +2,8 @@ import pygame
 from entity import *
 
 class Projectile(Entity):
-    def __init__(self, world, pos, w, h, rotate, speed, distance):
-        Entity.__init__(self, world, "bullet", pos, w, h)
+    def __init__(self, world, player, pos, w, h, rotate, speed, distance):
+        Entity.__init__(self, world, player, "bullet", pos, w, h)
         self.world = world
         self.pos = pos
         self.w = w

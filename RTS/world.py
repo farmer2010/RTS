@@ -17,7 +17,7 @@ class World(Panel):
         self.zoom = 3
         self.min_zoom = 1
         self.max_zoom = 10
-        self.cam_pos = [0, 0]#позиция центра камеры
+        self.cam_pos = [w * 256 / 2, h * 256 / 2]#позиция центра камеры
         self.cam_speed = 5
         self.display_W = pygame.display.Info().current_w
         self.display_H = pygame.display.Info().current_h
