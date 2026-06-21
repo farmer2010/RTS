@@ -34,7 +34,7 @@ class Unit(Entity):
                         (self.world.cam_pos[1] * self.world.zoom - self.world.display_H / 2 + mousepos[1]) / self.world.zoom
                     ]
                     self.path = self.pathfind((int((self.pos[0] - self.w/2) // 16), int((self.pos[1] - self.h/2) // 16)), (int(pos[0] // 16), int(pos[1] // 16)))
-                    self.path_index = 0
+                    self.path_index = 1
                     if len(self.path) > 0:
                         self.command = [int(pos[0] // 16), int(pos[1] // 16)]
                 if event.key == pygame.K_SPACE and self in self.player.selected_units:
@@ -91,10 +91,10 @@ class Unit(Entity):
                 collide = self.move(self.speed, rotate)
                 if collide:
                     self.path = self.pathfind((int((self.pos[0] - self.w/2) // 16), int((self.pos[1] - self.h/2) // 16)), (self.command[0], self.command[1]))
-                    self.path_index = 0
+                    self.path_index = 1
                 elif len(self.path) == 0:
                     self.path = self.pathfind((int((self.pos[0] - self.w / 2) // 16), int((self.pos[1] - self.h / 2) // 16)), (self.command[0], self.command[1]))
-                    self.path_index = 0
+                    self.path_index = 1
             else:
                 self.path_index += 1
 
