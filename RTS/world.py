@@ -8,7 +8,7 @@ import math
 from players import *
 
 class World(Panel):
-    def __init__(self, w=13, h=13):
+    def __init__(self, w=5, h=5):
         Panel.__init__(self, (0, 0, 1920, 1080))
         self.ch_w = w
         self.ch_h = h
@@ -23,6 +23,10 @@ class World(Panel):
         self.display_H = pygame.display.Info().current_h
         self.zoom_timer = 0
         self.zoom_speed = 0
+        self.pause = 0
+        #
+        self.draw_path = 0
+        self.draw_corners = 0
         #
         self.objects = []
         self.players = [UserPlayer(self), AiPlayer(self)]
@@ -33,11 +37,12 @@ class World(Panel):
         #
         self.field = [[None for y in range(self.w)] for x in range(self.h)]
         self.field = [[Air(self, (x, y)) for y in range(self.h)] for x in range(self.w)]
+        self.unit_field = [[[] for y in range(self.w)] for x in range(self.h)]
         opensimplex.seed(rand(0, 999999999999))
-        for x in range(self.w):
+        '''for x in range(self.w):
             for y in range(self.h):
                 if opensimplex.noise2(x / 10, y / 10) > 0:
-                    Stone(self, (x, y))
+                    Stone(self, (x, y))'''
         self.chunks = [[Chunk(self, (x, y)) for y in range(self.ch_w)] for x in range(self.ch_h)]
 
     def update(self, events):
@@ -112,10 +117,21 @@ class World(Panel):
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_1:
                     self.objects.append(Unit(self, self.player, self.display_to_game(mousepos), 30, 30))
-                if self.action_type == None:
-                    if event.key == pygame.K_f:
-                        self.action_pos = self.display_to_game(mousepos)
-                        self.action_type = "units"
+                if event.key == pygame.K_2:
+                    for obj in self.objects:
+                        if obj._class == "unit":
+                            pos = self.display_to_game(mousepos)
+                            if pos[0] > obj.pos[0] - obj.w/2 and pos[0] < obj.pos[0] + obj.w/2 and pos[1] > obj.pos[1] - obj.h/2 and pos[1] < obj.pos[1] + obj.h/2:
+                                obj.kill()
+                if event.key == pygame.K_F1:
+                    self.draw_path = not self.draw_path
+                if event.key == pygame.K_F2:
+                    self.draw_corners = not self.draw_corners
+                if event.key == pygame.K_ESCAPE:
+                    self.pause = not self.pause
+                if event.key == pygame.K_f and self.action_type == None:
+                    self.action_pos = self.display_to_game(mousepos)
+                    self.action_type = "units"
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_f and self.action_type == "units":
                     self.action_type = None
@@ -142,8 +158,9 @@ class World(Panel):
         #
         #ОБНОВЛЕНИЕ
         #
-        for obj in self.objects:
-            obj.update(events)
+        if not self.pause:
+            for obj in self.objects:
+                obj.update(events)
         #
 
     def draw(self, screen):
@@ -172,6 +189,9 @@ class World(Panel):
         utils.render_text(str(self.zoom), (0, 25), screen, color=(255, 0, 0))
         utils.render_text(str(d), (0, 50), screen, color=(255, 0, 0))
         utils.render_text(str(self.cam_pos), (0, 75), screen, color=(255, 0, 0))
+        utils.render_text("pause: " + str(self.pause), (0, 100), screen, color=(255, 0, 0))
+        utils.render_text("draw path: " + str(self.draw_path), (0, 125), screen, color=(255, 0, 0))
+        utils.render_text("draw corners: " + str(self.draw_corners), (0, 150), screen, color=(255, 0, 0))
 
     def display_to_game(self, disp_pos):#перевод экранных координат в игровые
         pos = [

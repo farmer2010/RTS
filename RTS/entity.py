@@ -24,16 +24,35 @@ class Entity():
 
     def kill(self):
         if not self.killed:
+            if self._class == "unit":
+                for x in range(int((self.pos[0] - self.w / 2) // 16), int((self.pos[0] + self.w / 2) // 16) + 1):
+                    for y in range(int((self.pos[1] - self.h / 2) // 16), int((self.pos[1] + self.h / 2) // 16) + 1):
+                        if x >= 0 and x < self.world.w and y >= 0 and y < self.world.h:
+                            self.world.unit_field[x][y].remove(self)
+                #
+                if self in self.player.selected_units:
+                    self.player.selected_units.remove(self)
+            #
             self.world.objects.remove(self)
         self.killed = 1
 
     def move(self, speed, rotate):
+        coll = 0
+        #
+        if self._class == "unit":
+            for x in range(int((self.pos[0] - self.w/2) // 16), int((self.pos[0] + self.w/2) // 16) + 1):
+                for y in range(int((self.pos[1] - self.h/2) // 16), int((self.pos[1] + self.h/2) // 16) + 1):
+                    if x >= 0 and x < self.world.w and y >= 0 and y < self.world.h:
+                        self.world.unit_field[x][y].remove(self)
+        #
         if not self.collide(0, 0)[0]:
             dx = math.cos(rotate) * speed
             dy = math.sin(rotate) * speed
             self.pos[0] += dx
             collide_x = self.collide((dx < 0)*2-1, 0)
             if collide_x[0]:
+                #if dx > 0.1 or dx < -0.1:
+                coll = 1
                 if dx > 0:
                     self.pos[0] = collide_x[1] - self.w/2
                 elif dx < 0:
@@ -41,10 +60,19 @@ class Entity():
             self.pos[1] += dy
             collide_y = self.collide(0, (dy < 0)*2-1)
             if collide_y[0]:
+                #if dy > 0.1 or dy < -0.1:
+                coll = 1
                 if dy > 0:
                     self.pos[1] = collide_y[2] - self.h/2
                 elif dy < 0:
                     self.pos[1] = collide_y[2] + self.h/2
+        #
+        if self._class == "unit":
+            for x in range(int((self.pos[0] - self.w/2) // 16), int((self.pos[0] + self.w/2) // 16) + 1):
+                for y in range(int((self.pos[1] - self.h/2) // 16), int((self.pos[1] + self.h/2) // 16) + 1):
+                    if x >= 0 and x < self.world.w and y >= 0 and y < self.world.h:
+                        self.world.unit_field[x][y].append(self)
+        return(coll)
 
     def collide(self, spx, spy):#spx, spy: 1 - движется влево, 0 - не движется, -1 - движется вправо
         if self.pos[0] < self.w/2 or self.pos[1] < self.h/2:#со стенами

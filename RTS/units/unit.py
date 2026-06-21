@@ -14,13 +14,19 @@ class Unit(Entity):
         self.path = []
         self.path_index = 0
         self.target = None
+        self.command = None
         self.player.units.append(self)
         self.image.fill((255, 0, 0))
+        #
+        for x in range(int((self.pos[0] - self.w/2) // 16), int((self.pos[0] + self.w/2) // 16) + 1):
+            for y in range(int((self.pos[1] - self.h/2) // 16), int((self.pos[1] + self.h/2) // 16) + 1):
+                if x >= 0 and x < self.world.w and y >= 0 and y < self.world.h:
+                    self.world.unit_field[x][y].append(self)
 
     def update(self, events):
         for event in events:
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_g:
+                if event.key == pygame.K_g and self in self.player.selected_units:
                     mousepos = pygame.mouse.get_pos()
                     pos = [
                         (self.world.cam_pos[0] * self.world.zoom - self.world.display_W / 2 + mousepos[0]) / self.world.zoom,
@@ -28,6 +34,8 @@ class Unit(Entity):
                     ]
                     self.path = self.pathfind((int((self.pos[0] - self.w/2) // 16), int((self.pos[1] - self.h/2) // 16)), (int(pos[0] // 16), int(pos[1] // 16)))
                     self.path_index = 0
+                    if len(self.path) > 0:
+                        self.command = [int(pos[0] // 16), int(pos[1] // 16)]
                 if event.key == pygame.K_SPACE:
                     mousepos = pygame.mouse.get_pos()
                     pos = self.world.display_to_game(mousepos)
@@ -40,8 +48,9 @@ class Unit(Entity):
             keys[pygame.K_DOWN],
             keys[pygame.K_LEFT]
         ]
-        if sum(move_keys) > 0:
+        if sum(move_keys) > 0 and self in self.player.selected_units:
             self.path = []
+            self.command = None
             if move_keys[1] + move_keys[3] == 0:
                 if move_keys[0]:
                     self.move(self.speed, 1.5 * math.pi)
@@ -77,34 +86,30 @@ class Unit(Entity):
             (-1, 0) : math.pi,
             (-1, -1) : 1.25 * math.pi,
             (0, -1) : 1.5 * math.pi,
-            (1, -1): 1.75 * math.pi,
+            (1, -1): 1.75 * math.pi
         }
         if self.path_index < len(self.path):
-            if self.path_index < len(self.path):
-                if self.path_index > 0:
-                    dx = int(self.path[self.path_index][0] - self.path[self.path_index - 1][0])
-                    dy = int(self.path[self.path_index][1] - self.path[self.path_index - 1][1])
-                    rotate = math.atan2(self.path[self.path_index][1] * 16 + 16 - self.pos[1], self.path[self.path_index][0] * 16 + 16 - self.pos[0])
-                    #
-                    if self.pos[0] > self.path[self.path_index][0] * 16 + 16 - self.speed and \
-                            self.pos[0] < self.path[self.path_index][0] * 16 + 16 + self.speed and \
-                            self.pos[1] > self.path[self.path_index][1] * 16 + 16 - self.speed and \
-                            self.pos[1] < self.path[self.path_index][1] * 16 + 16 + self.speed:
-                        self.pos = [self.path[self.path_index][0] * 16 + 16, self.path[self.path_index][1] * 16 + 16]
-                        self.path_index += 1
-                    else:
-                        self.move(self.speed, rotate)
-                else:
+            if self.path_index >= 0:
+                rotate = math.atan2(self.path[self.path_index][1] * 16 + 16 - self.pos[1], self.path[self.path_index][0] * 16 + 16 - self.pos[0])
+                #
+                if self.pos[0] > self.path[self.path_index][0] * 16 + 16 - self.speed and \
+                        self.pos[0] < self.path[self.path_index][0] * 16 + 16 + self.speed and \
+                        self.pos[1] > self.path[self.path_index][1] * 16 + 16 - self.speed and \
+                        self.pos[1] < self.path[self.path_index][1] * 16 + 16 + self.speed:
+                    #self.pos = [self.path[self.path_index][0] * 16 + 16, self.path[self.path_index][1] * 16 + 16]
                     self.path_index += 1
-                    '''if self.pos[0] > self.path[self.path_index][0] * 16 + 16 - self.speed and \
-                            self.pos[0] < self.path[self.path_index][0] * 16 + 16 + self.speed and \
-                            self.pos[1] > self.path[self.path_index][1] * 16 + 16 - self.speed and \
-                            self.pos[1] < self.path[self.path_index][1] * 16 + 16 + self.speed:
-                        self.pos = [self.path[self.path_index][0] * 16 + 16, self.path[self.path_index][1] * 16 + 16]
-                        self.path_index += 1
-                    else:
-                        rotate = math.atan2(self.path[self.path_index][1] * 16 + 16 - self.pos[1], self.path[self.path_index][0] * 16 + 16 - self.pos[0])
-                        self.move(self.speed, rotate)'''
+                    self.path = self.path = self.pathfind((int((self.pos[0] - self.w/2) // 16), int((self.pos[1] - self.h/2) // 16)), (self.command[0], self.command[1]))
+                    self.path_index = 1
+                collide = self.move(self.speed, rotate)
+                if collide:
+                    #self.path = self.pathfind((int((self.pos[0] - self.w/2) // 16), int((self.pos[1] - self.h/2) // 16)), (self.command[0], self.command[1]))
+                    #self.path_index = 0
+                    pass
+                elif len(self.path) == 0:
+                    self.path = self.pathfind((int((self.pos[0] - self.w / 2) // 16), int((self.pos[1] - self.h / 2) // 16)), (self.command[0], self.command[1]))
+                    self.path_index = 0
+            else:
+                self.path_index += 1
 
     def pathfind(self, start_pos, end_pos):
         field = self.world.field
@@ -163,14 +168,10 @@ class Unit(Entity):
                 # Проверка выхода за границы карты
                 if not (0 <= neighbor[0] < width and 0 <= neighbor[1] < height):
                     continue
-                # Проверка на стену
-                if field[neighbor[0]][neighbor[1]].has_hitbox:
-                    continue
                 # Если сосед уже в закрытом множестве, пропускаем
                 if neighbor in closed_set:
                     continue
-                # Проверка возможности диагонального перемещения
-                # Если движение диагональное, проверяем условие проходимости
+                # Проверка возможности передвижения
                 if not self.test_hitbox(neighbor, self.w, self.h):  # fffff
                     continue
                 if dx != 0 and dy != 0:
@@ -203,7 +204,7 @@ class Unit(Entity):
         for x in range(pos[0], pos[0] + count[0]):
             for y in range(pos[1], pos[1] + count[1]):
                 if x >= 0 and x < len(self.world.field) and y >= 0 and y < len(self.world.field[0]):
-                    if self.world.field[x][y].has_hitbox:
+                    if self.world.field[x][y].has_hitbox or (len(self.world.unit_field[x][y]) > 0 and self not in self.world.unit_field[x][y]):
                         return(0)
                 else:
                     return(0)
@@ -240,9 +241,17 @@ class Unit(Entity):
         ]
         screen.blit(pygame.transform.scale(self.image, (self.w * self.world.zoom, self.h * self.world.zoom)), pos)
         if self in self.player.selected_units:
-            pygame.draw.circle(screen, (255, 255, 0), pos, 10 * self.world.zoom)
+            pygame.draw.circle(screen, (255, 255, 0), [pos[0] + self.w/2*self.world.zoom, pos[1] + self.h/2*self.world.zoom], 10 * self.world.zoom)
         #
-        for pos in self.path:
+        if self.world.draw_path:
+            for pos in self.path:
+                img = pygame.Surface((16 * self.world.zoom, 16 * self.world.zoom), pygame.SRCALPHA)
+                img.fill((0, 128, 255, 128))
+                screen.blit(img, self.world.game_to_display((pos[0] * 16, pos[1] * 16)))
+        if self.world.draw_corners:
             img = pygame.Surface((16 * self.world.zoom, 16 * self.world.zoom), pygame.SRCALPHA)
-            img.fill((0, 128, 255, 128))
-            screen.blit(img, self.world.game_to_display((pos[0] * 16, pos[1] * 16)))
+            img.fill((128, 255, 0, 128))
+            screen.blit(img, self.world.game_to_display(((self.pos[0] - self.w/2) // 16 * 16, (self.pos[1] - self.h/2) // 16 * 16)))
+            screen.blit(img, self.world.game_to_display(((self.pos[0] + self.w / 2) // 16 * 16, (self.pos[1] - self.h / 2) // 16 * 16)))
+            screen.blit(img, self.world.game_to_display(((self.pos[0] - self.w / 2) // 16 * 16, (self.pos[1] + self.h / 2) // 16 * 16)))
+            screen.blit(img, self.world.game_to_display(((self.pos[0] + self.w / 2) // 16 * 16, (self.pos[1] + self.h / 2) // 16 * 16)))
