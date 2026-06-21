@@ -26,7 +26,7 @@ class Unit(Entity):
                         (self.world.cam_pos[0] * self.world.zoom - self.world.display_W / 2 + mousepos[0]) / self.world.zoom,
                         (self.world.cam_pos[1] * self.world.zoom - self.world.display_H / 2 + mousepos[1]) / self.world.zoom
                     ]
-                    self.path = self.pathfind((int((self.pos[0] + self.w/2) // 16), int((self.pos[1] + self.h/2) // 16)), (int(pos[0] // 16), int(pos[1] // 16)))
+                    self.path = self.pathfind((int((self.pos[0] - self.w/2) // 16), int((self.pos[1] - self.h/2) // 16)), (int(pos[0] // 16), int(pos[1] // 16)))
                     self.path_index = 0
                 if event.key == pygame.K_SPACE:
                     mousepos = pygame.mouse.get_pos()
