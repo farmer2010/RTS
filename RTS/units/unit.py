@@ -5,7 +5,7 @@ from random import randint as rand
 from projectiles.projectile import *
 import heapq
 
-font = pygame.font.SysFont(None, 40)
+font = pygame.font.SysFont(None, 24)
 
 class Unit(Entity):
     def __init__(self, world, player, pos, w, h):
@@ -102,9 +102,11 @@ class Unit(Entity):
             for y in range(int((self.pos[1] - self.h/2) // 16), int((self.pos[1] + self.h/2) // 16) + 1):
                 if self.world.test_for_block_pos((x, y)):
                     if func == "remove":
-                        self.world.unit_field[x][y].remove(self)
+                        if self in self.world.unit_field[x][y]:
+                            self.world.unit_field[x][y].remove(self)
                     elif func == "add":
-                        self.world.unit_field[x][y].append(self)
+                        if self not in self.world.unit_field[x][y]:
+                            self.world.unit_field[x][y].append(self)
 
     def kill(self):
         Entity.kill(self)
@@ -117,33 +119,35 @@ class Unit(Entity):
         self.player.units.remove(self)
 
     def move(self, speed, rotate):
+        #self.pos[0] = round(self.pos[0], 5)
+        #self.pos[1] = round(self.pos[1], 5)
         self.update_unit_field("remove")
         pos = [self.pos[0] // 16, self.pos[1] // 16]
         mov = Entity.move(self, speed, rotate)
         new_pos = [self.pos[0] // 16, self.pos[1] // 16]
-        if new_pos != pos:
-            self.update_fog("remove", pos)
-            self.update_fog("add", new_pos)
+        #if new_pos != pos:
+        #    self.update_fog("remove", pos)
+        #    self.update_fog("add", new_pos)
         self.update_unit_field("add")
         return(mov)
 
     def move_path(self):
         if self.path_index < len(self.path):
             if self.path_index >= 0:
-                rotate = math.atan2(self.path[self.path_index][1] * 16 + 16 - self.pos[1], self.path[self.path_index][0] * 16 + 16 - self.pos[0])
+                rotate = math.atan2(self.path[self.path_index][1] * 16 + self.h/2 - self.pos[1], self.path[self.path_index][0] * 16 + self.w/2 - self.pos[0])
                 #
-                if self.pos[0] > self.path[self.path_index][0] * 16 + 16 - self.speed and \
-                        self.pos[0] < self.path[self.path_index][0] * 16 + 16 + self.speed and \
-                        self.pos[1] > self.path[self.path_index][1] * 16 + 16 - self.speed and \
-                        self.pos[1] < self.path[self.path_index][1] * 16 + 16 + self.speed:
+                if self.pos[0] - self.w/2 > self.path[self.path_index][0] * 16 - self.speed and \
+                        self.pos[0] - self.w/2 < self.path[self.path_index][0] * 16 + self.speed and \
+                        self.pos[1] - self.h/2 > self.path[self.path_index][1] * 16 - self.speed and \
+                        self.pos[1] - self.h/2 < self.path[self.path_index][1] * 16 + self.speed:
                     self.path_index += 1
                 collide = self.move(self.speed, rotate)
-                if collide:
-                    self.path = self.pathfind((int((self.pos[0] - self.w/2) // 16), int((self.pos[1] - self.h/2) // 16)), (self.command[0], self.command[1]))
-                    self.path_index = 1
-                elif len(self.path) == 0:
-                    self.path = self.pathfind((int((self.pos[0] - self.w / 2) // 16), int((self.pos[1] - self.h / 2) // 16)), (self.command[0], self.command[1]))
-                    self.path_index = 1
+                #if collide:
+                #    self.path = self.pathfind((int((self.pos[0] - self.w/2) // 16), int((self.pos[1] - self.h/2) // 16)), (self.command[0], self.command[1]))
+                #    self.path_index = 1
+                #elif len(self.path) == 0:
+                #    self.path = self.pathfind((int((self.pos[0] - self.w / 2) // 16), int((self.pos[1] - self.h / 2) // 16)), (self.command[0], self.command[1]))
+                #    self.path_index = 1
             else:
                 self.path_index += 1
 
@@ -240,8 +244,8 @@ class Unit(Entity):
         for x in range(pos[0], pos[0] + count[0]):
             for y in range(pos[1], pos[1] + count[1]):
                 if x >= 0 and x < len(self.world.field) and y >= 0 and y < len(self.world.field[0]):
-                    if self.world.field[x][y].has_hitbox or (len(self.world.unit_field[x][y]) > 0 and self not in self.world.unit_field[x][y]):
-                    #if self.world.field[x][y].has_hitbox:
+                    #if self.world.field[x][y].has_hitbox or (len(self.world.unit_field[x][y]) > 0 and self not in self.world.unit_field[x][y]):
+                    if self.world.field[x][y].has_hitbox:
                         return(0)
                 else:
                     return(0)
@@ -278,7 +282,7 @@ class Unit(Entity):
         ]
         screen.blit(pygame.transform.scale(self.image, (self.w * self.world.zoom, self.h * self.world.zoom)), pos)
         if self in self.player.selected_units:
-            pygame.draw.circle(screen, (255, 255, 0), [pos[0] + self.w/2*self.world.zoom, pos[1] + self.h/2*self.world.zoom], 10 * self.world.zoom)
+            pygame.draw.circle(screen, (255, 255, 0), [pos[0] + self.w/2*self.world.zoom, pos[1] + self.h/2*self.world.zoom], 10 * self.world.zoom * (self.w / 30))
         #
         if self.world.draw_path:
             for pos in self.path:
@@ -292,3 +296,8 @@ class Unit(Entity):
             screen.blit(img, self.world.game_to_display(((self.pos[0] + self.w / 2) // 16 * 16, (self.pos[1] - self.h / 2) // 16 * 16)))
             screen.blit(img, self.world.game_to_display(((self.pos[0] - self.w / 2) // 16 * 16, (self.pos[1] + self.h / 2) // 16 * 16)))
             screen.blit(img, self.world.game_to_display(((self.pos[0] + self.w / 2) // 16 * 16, (self.pos[1] + self.h / 2) // 16 * 16)))
+        p = self.world.game_to_display(self.pos)
+        #col = self.collide(0, 0)
+        if self.world.draw_path_index:
+            screen.blit(font.render(str(self.path_index), 1, (0, 0, 0)), p)
+        #screen.blit(font.render(str(col[0]) + " " + str(col[3]), 1, (0, 0, 0)), (p[0], p[1] + 15))

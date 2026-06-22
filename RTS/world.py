@@ -27,6 +27,7 @@ class World(Panel):
         #
         self.draw_path = 0
         self.draw_corners = 0
+        self.draw_path_index = 0
         #
         self.objects = []
         self.players = [UserPlayer(self), AiPlayer(self)]
@@ -117,7 +118,7 @@ class World(Panel):
         for event in events:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_1:
-                    self.objects.append(Unit(self, self.player, self.display_to_game(mousepos), 30, 30))
+                    self.objects.append(Unit(self, self.player, self.display_to_game(mousepos), 10, 10))
                 if event.key == pygame.K_2:
                     for obj in self.objects:
                         if obj._class == "unit":
@@ -128,6 +129,8 @@ class World(Panel):
                     self.draw_path = not self.draw_path
                 if event.key == pygame.K_F2:
                     self.draw_corners = not self.draw_corners
+                if event.key == pygame.K_F3:
+                    self.draw_path_index = not self.draw_path_index
                 if event.key == pygame.K_ESCAPE:
                     self.pause = not self.pause
                 if event.key == pygame.K_f and self.action_type == None:
@@ -179,10 +182,10 @@ class World(Panel):
         for obj in self.objects:
             obj.draw(screen)
         #
-        for x in range(int(self.cam_pos[0] / 256 - count[0] / 2), int(self.cam_pos[0] / 256 + count[0] / 2) + 1):
+        '''for x in range(int(self.cam_pos[0] / 256 - count[0] / 2), int(self.cam_pos[0] / 256 + count[0] / 2) + 1):
             for y in range(int(self.cam_pos[1] / 256 - count[1] / 2), int(self.cam_pos[1] / 256 + count[1] / 2) + 1):
                 if x >= 0 and x < self.ch_w and y >= 0 and y < self.ch_h:
-                    screen.blit(self.chunks[x][y].scaled_fog_image, self.game_to_display((x * 256, y * 256)))
+                    screen.blit(self.chunks[x][y].scaled_fog_image, self.game_to_display((x * 256, y * 256)))'''
         #
         if self.action_type != None:
             pos = self.game_to_display(self.action_pos)
@@ -198,6 +201,7 @@ class World(Panel):
         utils.render_text("pause: " + str(self.pause), (0, 100), screen, color=(255, 0, 0))
         utils.render_text("draw path: " + str(self.draw_path), (0, 125), screen, color=(255, 0, 0))
         utils.render_text("draw corners: " + str(self.draw_corners), (0, 150), screen, color=(255, 0, 0))
+        utils.render_text("draw path index: " + str(self.draw_path_index), (0, 175), screen, color=(255, 0, 0))
 
     def display_to_game(self, disp_pos):#перевод экранных координат в игровые
         pos = [

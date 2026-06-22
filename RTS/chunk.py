@@ -23,7 +23,7 @@ class Chunk():
         if self.world.zoom != self.image_zoom:
             self.image_zoom = self.world.zoom
             self.scaled_image = pygame.transform.scale(self.image, (math.ceil(256 * self.world.zoom), math.ceil(256 * self.world.zoom)))
-            self.scaled_fog_image = pygame.transform.scale(self.fog_image, (math.ceil(256 * self.world.zoom), math.ceil(256 * self.world.zoom)))
+            #self.scaled_fog_image = pygame.transform.scale(self.fog_image, (math.ceil(256 * self.world.zoom), math.ceil(256 * self.world.zoom)))
         screen.blit(self.scaled_image,
                     [(self.pos[0] - self.world.cam_pos[0] / 256) * 256 * self.world.zoom + self.world.display_W / 2,
                      (self.pos[1] - self.world.cam_pos[1] / 256) * 256 * self.world.zoom + self.world.display_H / 2])
