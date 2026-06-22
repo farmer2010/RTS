@@ -118,7 +118,7 @@ class World(Panel):
         for event in events:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_1:
-                    self.objects.append(Unit(self, self.player, self.display_to_game(mousepos), 10, 10))
+                    self.objects.append(Unit(self, self.player, self.display_to_game(mousepos), 50, 10))
                 if event.key == pygame.K_2:
                     for obj in self.objects:
                         if obj._class == "unit":

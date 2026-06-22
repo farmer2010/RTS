@@ -134,12 +134,12 @@ class Unit(Entity):
     def move_path(self):
         if self.path_index < len(self.path):
             if self.path_index >= 0:
-                rotate = math.atan2(self.path[self.path_index][1] * 16 + self.h/2 - self.pos[1], self.path[self.path_index][0] * 16 + self.w/2 - self.pos[0])
+                rotate = math.atan2(self.path[self.path_index][1] * 16 + self.h/2 + 1 - self.pos[1], self.path[self.path_index][0] * 16 + self.w/2 + 1 - self.pos[0])
                 #
-                if self.pos[0] - self.w/2 > self.path[self.path_index][0] * 16 - self.speed and \
-                        self.pos[0] - self.w/2 < self.path[self.path_index][0] * 16 + self.speed and \
-                        self.pos[1] - self.h/2 > self.path[self.path_index][1] * 16 - self.speed and \
-                        self.pos[1] - self.h/2 < self.path[self.path_index][1] * 16 + self.speed:
+                if self.pos[0] > self.path[self.path_index][0] * 16 + self.w/2 + 1 - self.speed and \
+                        self.pos[0] < self.path[self.path_index][0] * 16 + self.w/2 + 1 + self.speed and \
+                        self.pos[1] > self.path[self.path_index][1] * 16 + self.h/2 + 1 - self.speed and \
+                        self.pos[1] < self.path[self.path_index][1] * 16 + self.h/2 + 1 + self.speed:
                     self.path_index += 1
                 collide = self.move(self.speed, rotate)
                 #if collide:
