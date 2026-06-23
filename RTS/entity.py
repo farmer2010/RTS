@@ -31,8 +31,12 @@ class Entity():
 
     def move(self, speed, rotate):
         coll = 0
+        coll_obj_s = None
+        coll_obj_x = None
+        coll_obj_y = None
         #
         collide_s = self.collide(0, 0)
+        coll_obj_s = collide_s[3]
         if not collide_s[0]:
             dx = math.cos(rotate) * speed
             dy = math.sin(rotate) * speed
@@ -47,9 +51,12 @@ class Entity():
                 #
                 if collide_x[3] != None and collide_x[3]._class == "unit" and self._class == "unit":
                     yv = (collide_x[3].pos[1] - self.pos[1]) / self.h
-                    if collide_x[3].pos[0] == self.pos[0]:
-                        yv = rand(-100, 100) / 400
+                    if yv > -0.25 and yv < 0:
+                        yv = -0.25
+                    elif yv < 0.25 and yv > 0:
+                        yv = 0.25
                     collide_x[3].move(speed * 0.5, math.atan2(yv, dx))
+                coll_obj_x = collide_x[3]
             self.pos[1] += dy
             collide_y = self.collide(0, (dy < 0)*2-1)
             if collide_y[0]:
@@ -61,13 +68,16 @@ class Entity():
                 #
                 if collide_y[3] != None and collide_y[3]._class == "unit" and self._class == "unit":
                     xv = (collide_y[3].pos[0] - self.pos[0]) / self.w
-                    if collide_y[3].pos[0] == self.pos[0]:
-                        xv = rand(-100, 100) / 400
+                    if xv > -0.25 and xv < 0:
+                        xv = -0.25
+                    elif xv < 0.25 and xv > 0:
+                        xv = 0.25
                     collide_y[3].move(speed * 0.5, math.atan2(dy, xv))
+                coll_obj_y = collide_y[3]
         else:
             coll = 1
         #
-        return(coll)
+        return(coll, coll_obj_s, coll_obj_x, coll_obj_y)
 
     def collide(self, spx, spy):#spx, spy: 1 - движется влево, 0 - не движется, -1 - движется вправо
         """
@@ -99,6 +109,14 @@ class Entity():
         if self._class != "bullet":
             for obj in self.world.objects:#с другими юнитами
                 if self.entity_collide(obj) and obj._class != "bullet":
+                    if self._class == "unit" and obj._class == "unit":
+                        if self.player == obj.player:
+                            if obj.command == self.command and self.command != None:
+                                if obj.stop_flag and (self.pos[0] - self.command[0][0]) ** 2 + (self.pos[1] - self.command[0][1]) ** 2 < 49:
+                                    self.stop_flag = 1
+                                    self.path = []
+                            if obj.inv_flag != 0 and obj.command != None:
+                                continue
                     if spx == 0 and spy == 0 and self not in self.player.selected_units:
                         pass
                     if spx == 0 and spy == 0:

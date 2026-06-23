@@ -24,6 +24,7 @@ class World(Panel):
         self.zoom_timer = 0
         self.zoom_speed = 0
         self.pause = 0
+        self.command_index = 0
         #
         self.draw_path = 0
         self.draw_corners = 0
@@ -36,14 +37,23 @@ class World(Panel):
         self.action_type = None
         self.action_pos = [0, 0]
         #
-        self.field = [[None for y in range(self.w)] for x in range(self.h)]
         self.field = [[Air(self, (x, y)) for y in range(self.h)] for x in range(self.w)]
+        self.ground_field = [[Air(self, (x, y)) for y in range(self.h)] for x in range(self.w)]
         self.unit_field = [[[] for y in range(self.w)] for x in range(self.h)]
         opensimplex.seed(rand(0, 999999999999))
-        '''for x in range(self.w):
+        for x in range(self.w):
             for y in range(self.h):
-                if opensimplex.noise2(x / 10, y / 10) > 0:
-                    Stone(self, (x, y))'''
+                f = opensimplex.noise2(x / 30, y / 30)
+                self.ground_field[x][y] = Grass(self, (x, y))
+                if f > 0.5:
+                    self.field[x][y] = Stone(self, (x, y))
+                elif f > -0.1:
+                    self.field[x][y] = Air(self, (x, y))
+                elif f > -0.25:
+                    self.field[x][y] = Air(self, (x, y))
+                    self.ground_field[x][y] = Sand(self, (x, y))
+                else:
+                    self.field[x][y] = Water(self, (x, y))
         self.chunks = [[Chunk(self, (x, y)) for y in range(self.ch_w)] for x in range(self.ch_h)]
 
     def update(self, events):
@@ -118,7 +128,7 @@ class World(Panel):
         for event in events:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_1:
-                    self.objects.append(Unit(self, self.player, self.display_to_game(mousepos), 50, 10))
+                    self.objects.append(Unit(self, self.player, "tank", self.display_to_game(mousepos), 30, 30))
                 if event.key == pygame.K_2:
                     for obj in self.objects:
                         if obj._class == "unit":
@@ -136,6 +146,16 @@ class World(Panel):
                 if event.key == pygame.K_f and self.action_type == None:
                     self.action_pos = self.display_to_game(mousepos)
                     self.action_type = "units"
+                if event.key == pygame.K_g:
+                    for obj in self.objects:
+                        if obj._class == "unit" and obj.player == self.player and obj in self.player.selected_units:
+                            mousepos = pygame.mouse.get_pos()
+                            pos = [
+                                int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) / self.zoom / 16),
+                                int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) / self.zoom / 16)
+                            ]
+                            obj.move_command(pos)
+                    self.command_index += 1
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_f and self.action_type == "units":
                     self.action_type = None

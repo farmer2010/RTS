@@ -8,17 +8,20 @@ import heapq
 font = pygame.font.SysFont(None, 24)
 
 class Unit(Entity):
-    def __init__(self, world, player, pos, w, h):
+    def __init__(self, world, player, _type, pos, w, h, speed=3, fog_radius=15):
         Entity.__init__(self, world, player, "unit", pos, w, h)
-        self.speed = 3
+        self.type = _type
+        self.speed = speed
         self.path = []
         self.path_index = 0
         self.target = None
         self.command = None
         self.player.units.append(self)
         self.image.fill((255, 0, 0))
-        self.timer = 0
-        self.fog_radius = 15
+        self.inv_flag = 0#юнит неуязвим?
+        self.stop_timer = 0#счетчик шагов, в течение которых юнит не двигался
+        self.stop_flag = 0#юнит доехал до конечной точки?
+        self.fog_radius = fog_radius
         #
         self.update_unit_field("add")
         self.update_fog("add", [self.pos[0] // 16, self.pos[1] // 16])
@@ -26,17 +29,7 @@ class Unit(Entity):
     def update(self, events):
         for event in events:
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_g and self in self.player.selected_units:
-                    mousepos = pygame.mouse.get_pos()
-                    pos = [
-                        int((self.world.cam_pos[0] * self.world.zoom - self.world.display_W / 2 + mousepos[0]) / self.world.zoom / 16),
-                        int((self.world.cam_pos[1] * self.world.zoom - self.world.display_H / 2 + mousepos[1]) / self.world.zoom / 16)
-                    ]
-                    if self.world.test_for_block_pos(pos):
-                        self.path = self.pathfind((int((self.pos[0] - self.w/2) // 16), int((self.pos[1] - self.h/2) // 16)), (pos[0], pos[1]))
-                        self.path_index = 1
-                        if len(self.path) > 0:
-                            self.command = [pos[0], pos[1]]
+                #if event.key == pygame.K_g and self in self.player.selected_units:
                 if event.key == pygame.K_SPACE and self in self.player.selected_units:
                     mousepos = pygame.mouse.get_pos()
                     pos = self.world.display_to_game(mousepos)
@@ -73,8 +66,14 @@ class Unit(Entity):
                         self.move(self.speed, 0.75 * math.pi)
                     elif move_keys[1]:
                         self.move(self.speed, 0.25 * math.pi)
-        #
-        self.timer = 1
+
+    def move_command(self, pos):
+        if self.world.test_for_block_pos(pos):
+            self.path = self.pathfind((int((self.pos[0] - self.w / 2) // 16), int((self.pos[1] - self.h / 2) // 16)),(pos[0], pos[1]))
+            self.path_index = 1
+            if len(self.path) > 0:
+                self.command = ((pos[0], pos[1]), self.world.command_index)
+        self.stop_flag = 0
 
     def update_fog(self, func, pos):
         for x in range(int(pos[0] - self.fog_radius), int(pos[0] + self.fog_radius + 1)):
@@ -119,11 +118,12 @@ class Unit(Entity):
         self.player.units.remove(self)
 
     def move(self, speed, rotate):
-        #self.pos[0] = round(self.pos[0], 5)
-        #self.pos[1] = round(self.pos[1], 5)
         self.update_unit_field("remove")
-        pos = [self.pos[0] // 16, self.pos[1] // 16]
-        mov = Entity.move(self, speed, rotate)
+        pos = [int(self.pos[0] // 16), int(self.pos[1] // 16)]
+        c = 1
+        if self.world.test_for_block_pos(pos):
+            c = self.world.ground_field[pos[0]][pos[1]].speed
+        mov = Entity.move(self, speed * c, rotate)
         new_pos = [self.pos[0] // 16, self.pos[1] // 16]
         #if new_pos != pos:
         #    self.update_fog("remove", pos)
@@ -141,7 +141,28 @@ class Unit(Entity):
                         self.pos[1] > self.path[self.path_index][1] * 16 + self.h/2 + 1 - self.speed and \
                         self.pos[1] < self.path[self.path_index][1] * 16 + self.h/2 + 1 + self.speed:
                     self.path_index += 1
+                '''if self.stop_timer == 0 or 1:
+                    collide = self.move(self.speed, rotate)
+                    tm1 = 0
+                    tm2 = 0
+                    tm3 = 0
+                    if collide[0]:
+                        if collide[1] != None and collide[1]._class == "unit" and collide[1].stop_timer == 0:
+                            tm1 = 1
+                        if collide[2] != None and collide[2]._class == "unit" and collide[2].stop_timer == 0:
+                            tm2 = 1
+                        if collide[3] != None and collide[3]._class == "unit" and collide[3].stop_timer == 0:
+                            tm3 = 1
+                    if tm1 or tm2 or tm3:
+                        self.stop_timer = 15'''
                 collide = self.move(self.speed, rotate)
+                if collide[0]:
+                    self.stop_timer += 1
+                else:
+                    self.stop_timer = 0
+                    self.inv_flag = 0
+                if self.stop_timer == 10:
+                    self.inv_flag = 1
                 #if collide:
                 #    self.path = self.pathfind((int((self.pos[0] - self.w/2) // 16), int((self.pos[1] - self.h/2) // 16)), (self.command[0], self.command[1]))
                 #    self.path_index = 1
@@ -150,6 +171,10 @@ class Unit(Entity):
                 #    self.path_index = 1
             else:
                 self.path_index += 1
+        else:#конец маршрута
+            self.path = []
+            self.inv_flag = 0
+            self.stop_flag = 1
 
     def pathfind(self, start_pos, end_pos):
         field = self.world.field
@@ -219,9 +244,9 @@ class Unit(Entity):
                         continue
                 # Вычисляем стоимость перехода к соседу
                 if dx != 0 and dy != 0:
-                    move_cost = DIAGONAL_COST
+                    move_cost = DIAGONAL_COST / self.world.ground_field[neighbor[0]][neighbor[1]].speed
                 else:
-                    move_cost = STRAIGHT_COST
+                    move_cost = STRAIGHT_COST / self.world.ground_field[neighbor[0]][neighbor[1]].speed
                 tentative_g = g_score[current] + move_cost
                 # Если сосед не в открытом множестве или найден лучший путь
                 if neighbor not in open_set_hash or tentative_g < g_score.get(neighbor, float('inf')):

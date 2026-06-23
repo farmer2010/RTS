@@ -32,10 +32,12 @@ class Chunk():
         self.fog_image.fill((0, 0, 0, 0))
         for x in range(16):
             for y in range(16):
+                if self.world.field[self.pos[0] * 16 + x][self.pos[1] * 16 + y].type == "air":
+                    self.image.blit(self.world.ground_field[self.pos[0] * 16 + x][self.pos[1] * 16 + y].image,(x * 16, y * 16))
                 self.image.blit(self.world.field[self.pos[0] * 16 + x][self.pos[1] * 16 + y].image, (x * 16, y * 16))
-                if self.world.player.fog[self.pos[0] * 16 + x][self.pos[1] * 16 + y] == 0:
-                    self.fog_image.blit(self.dark_img, (x * 16, y * 16))
-                else:
-                    self.fog_image.blit(self.inv_img, (x * 16, y * 16))
+                #if self.world.player.fog[self.pos[0] * 16 + x][self.pos[1] * 16 + y] == 0:
+                #    self.fog_image.blit(self.dark_img, (x * 16, y * 16))
+                #else:
+                #    self.fog_image.blit(self.inv_img, (x * 16, y * 16))
         self.scaled_image = pygame.transform.scale(self.image, (math.ceil(256 * self.world.zoom), math.ceil(256 * self.world.zoom)))
-        self.scaled_fog_image = pygame.transform.scale(self.fog_image, (math.ceil(256 * self.world.zoom), math.ceil(256 * self.world.zoom)))
+        #self.scaled_fog_image = pygame.transform.scale(self.fog_image, (math.ceil(256 * self.world.zoom), math.ceil(256 * self.world.zoom)))

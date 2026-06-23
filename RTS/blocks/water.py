@@ -1,8 +1,9 @@
 from blocks.block import *
 from textures import *
 
-class Stone(Block):
+
+class Water(Block):
     def __init__(self, world, pos):
-        Block.__init__(self, world, "stone", pos)
+        Block.__init__(self, world, "water", pos)
         self.image = pygame.Surface((16, 16))
-        self.image.blit(stone_img, (0, 0))
+        self.image.blit(water_img, (0, 0))
