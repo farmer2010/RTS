@@ -19,6 +19,8 @@ class Chunk():
         self.image_zoom = 0.999
         self.objects = []
         self.update_image()
+        #
+        self.fog_changes = 0
 
     def draw(self, screen):
         if self.world.zoom != self.image_zoom:
@@ -30,7 +32,6 @@ class Chunk():
                      (self.pos[1] - self.world.cam_pos[1] / 256) * 256 * self.world.zoom + self.world.display_H / 2])
 
     def update_image(self):
-        self.fog_image.fill((0, 0, 0, 0))
         self.image = pygame.Surface((256, 256), pygame.SRCALPHA)
         for x in range(16):
             for y in range(16):
@@ -39,9 +40,12 @@ class Chunk():
                 self.image.blit(self.world.field[self.pos[0] * 16 + x][self.pos[1] * 16 + y].image, (x * 16, y * 16))
                 if self.world.player.task_field[self.pos[0] * 16 + x][self.pos[1] * 16 + y] == 1:
                     self.image.blit(dig_img,(x * 16, y * 16))
+        self.scaled_image = pygame.transform.scale(self.image, (math.ceil(256 * self.world.zoom), math.ceil(256 * self.world.zoom)))
+
+    def update_fog_image(self):
+        self.fog_image.fill((0, 0, 0, 0))
+        for x in range(16):
+            for y in range(16):
                 if self.world.player.fog[self.pos[0] * 16 + x][self.pos[1] * 16 + y] == 0:
                     self.fog_image.blit(self.dark_img, (x * 16, y * 16))
-                else:
-                    self.fog_image.blit(self.inv_img, (x * 16, y * 16))
-        self.scaled_image = pygame.transform.scale(self.image, (math.ceil(256 * self.world.zoom), math.ceil(256 * self.world.zoom)))
         self.scaled_fog_image = pygame.transform.scale(self.fog_image, (math.ceil(256 * self.world.zoom), math.ceil(256 * self.world.zoom)))

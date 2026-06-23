@@ -56,6 +56,7 @@ class World(Panel):
                     self.ground_field[x][y] = Sand(self, (x, y))
                 else:
                     self.field[x][y] = Water(self, (x, y))
+                self.field[x][y] = Air(self, (x, y))
         self.chunks = [[Chunk(self, (x, y)) for y in range(self.ch_w)] for x in range(self.ch_h)]
 
     def update(self, events):
@@ -183,6 +184,12 @@ class World(Panel):
         if not self.pause:
             for obj in self.objects:
                 obj.update(events)
+        #
+        for x in range(self.ch_w):
+            for y in range(self.ch_h):
+                if self.chunks[x][y].fog_changes:
+                    self.chunks[x][y].update_fog_image()
+                    self.chunks[x][y].fog_changes = False
         #
 
     def action_func(self):

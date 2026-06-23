@@ -26,6 +26,8 @@ class Unit(Entity):
         self.update_unit_field("add")
         self.update_fog("add", [self.pos[0] // 16, self.pos[1] // 16])
         self.fog_presets = self.generate_fog_presets(fog_radius)
+        print(self.fog_presets[0][0])
+        print(self.fog_presets[0][1])
 
     def update(self, events):
         '''for event in events:
@@ -154,7 +156,7 @@ class Unit(Entity):
         for x in range(int(self.pos[0] / 256 - count[0] / 2), int(self.pos[0] / 256 + count[0] / 2) + 1):
             for y in range(int(self.pos[1] / 256 - count[1] / 2), int(self.pos[1] / 256 + count[1] / 2) + 1):
                 if x >= 0 and x < self.world.ch_w and y >= 0 and y < self.world.ch_h:
-                    self.world.chunks[x][y].update_image()
+                    self.world.chunks[x][y].fog_changes = 1
 
     def update_unit_field(self, func):
         for x in range(int((self.pos[0] - self.w/2) // 16), int((self.pos[0] + self.w/2) // 16) + 1):
@@ -195,18 +197,19 @@ class Unit(Entity):
         if self.world.test_for_block_pos(pos):
             c = self.world.ground_field[pos[0]][pos[1]].speed
         mov = Entity.move(self, speed * c, rotate)
-        new_pos = [self.pos[0] // 16, self.pos[1] // 16]
+        new_pos = [int(self.pos[0] // 16), int(self.pos[1] // 16)]
         if new_pos != pos:
             rotate = moves[(new_pos[0] - pos[0], new_pos[1] - pos[1])]
-            for p in self.fog_presets[rotate][0]:
+            for p in self.fog_presets[rotate][1]:
                 npos = [pos[0] + p[0], pos[1] + p[1]]
                 if self.world.test_for_block_pos(npos):
                     if self in self.player.fog_units[npos[0]][npos[1]]:
                         self.player.fog_units[npos[0]][npos[1]].remove(self)
-                        self.player.fog[npos[0]][npos[1]] = 0
+                        if len(self.player.fog_units[npos[0]][npos[1]]) == 0:
+                            self.player.fog[npos[0]][npos[1]] = 0
             #
-            for p in self.fog_presets[rotate][1]:
-                npos = [pos[0] + p[0], pos[1] + p[1]]
+            for p in self.fog_presets[rotate][0]:
+                npos = [new_pos[0] + p[0], new_pos[1] + p[1]]
                 if self.world.test_for_block_pos(npos):
                     if self not in self.player.fog_units[npos[0]][npos[1]]:
                         self.player.fog_units[npos[0]][npos[1]].append(self)
@@ -216,7 +219,9 @@ class Unit(Entity):
             for x in range(int(self.pos[0] / 256 - count[0] / 2), int(self.pos[0] / 256 + count[0] / 2) + 1):
                 for y in range(int(self.pos[1] / 256 - count[1] / 2), int(self.pos[1] / 256 + count[1] / 2) + 1):
                     if x >= 0 and x < self.world.ch_w and y >= 0 and y < self.world.ch_h:
-                        self.world.chunks[x][y].update_image()
+                        self.world.chunks[x][y].fog_changes = 1
+            #self.update_fog("remove", pos)
+            #self.update_fog("add", new_pos)
         self.update_unit_field("add")
         return(mov)
 

@@ -7,4 +7,4 @@ class Grass(Block):
         self.image = pygame.Surface((16, 16))
         self.image = grass_img
         self.has_hitbox = False
-        self.speed = 0.9
+        self.speed = 0.8

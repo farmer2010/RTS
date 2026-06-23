@@ -7,4 +7,4 @@ class Sand(Block):
         self.image = pygame.Surface((16, 16))
         self.image = sand_img
         self.has_hitbox = False
-        self.speed = 0.7
+        self.speed = 0.5
