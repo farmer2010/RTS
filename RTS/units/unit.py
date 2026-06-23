@@ -27,14 +27,14 @@ class Unit(Entity):
         self.update_fog("add", [self.pos[0] // 16, self.pos[1] // 16])
 
     def update(self, events):
-        for event in events:
+        '''for event in events:
             if event.type == pygame.KEYDOWN:
-                #if event.key == pygame.K_g and self in self.player.selected_units:
                 if event.key == pygame.K_SPACE and self in self.player.selected_units:
                     mousepos = pygame.mouse.get_pos()
                     pos = self.world.display_to_game(mousepos)
-                    self.world.objects.append(Projectile(self.world, self.player, self.pos.copy(), 10, 10, math.atan2(pos[1] - self.pos[1], pos[0] - self.pos[0]), 5, 240))
+                    self.world.objects.append(Projectile(self.world, self.player, self.pos.copy(), 10, 10, math.atan2(pos[1] - self.pos[1], pos[0] - self.pos[0]), 5, 240))'''
         self.move_path()
+        #
         keys = pygame.key.get_pressed()
         move_keys = [
             keys[pygame.K_UP],

@@ -11,6 +11,7 @@ class Block():
         self.has_hitbox = 1
         self.progress = 100#прогресс ломания
         self.speed = 1
+        self.can_mined = 0
 
     def update(self, events):
         pass

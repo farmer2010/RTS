@@ -1,3 +1,5 @@
+import pygame
+
 from farmgui import *
 from blocks import *
 from chunk import *
@@ -54,6 +56,7 @@ class World(Panel):
                     self.ground_field[x][y] = Sand(self, (x, y))
                 else:
                     self.field[x][y] = Water(self, (x, y))
+                self.field[x][y] = Stone(self, (x, y))
         self.chunks = [[Chunk(self, (x, y)) for y in range(self.ch_w)] for x in range(self.ch_h)]
 
     def update(self, events):
@@ -107,7 +110,7 @@ class World(Panel):
         if self.zoom_timer > 0:
             self.zoom_timer -= 1
         #
-        if pygame.mouse.get_pressed()[0]:#установка
+        if pygame.mouse.get_pressed()[0] and not keys[pygame.K_LSHIFT]:#установка
             blockpos = [
                 int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) // (16 * self.zoom)),
                 int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) // (16 * self.zoom))
@@ -128,8 +131,10 @@ class World(Panel):
         for event in events:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_1:
-                    self.objects.append(Unit(self, self.player, "tank", self.display_to_game(mousepos), 30, 30))
+                    self.objects.append(Tank(self, self.player, self.display_to_game(mousepos)))
                 if event.key == pygame.K_2:
+                    self.objects.append(Worker(self, self.player, self.display_to_game(mousepos)))
+                if event.key == pygame.K_3:
                     for obj in self.objects:
                         if obj._class == "unit":
                             pos = self.display_to_game(mousepos)
@@ -143,10 +148,27 @@ class World(Panel):
                     self.draw_path_index = not self.draw_path_index
                 if event.key == pygame.K_ESCAPE:
                     self.pause = not self.pause
-                if event.key == pygame.K_f and self.action_type == None:
-                    self.action_pos = self.display_to_game(mousepos)
-                    self.action_type = "units"
-                if event.key == pygame.K_g:
+                if self.action_type == None:
+                    if event.key == pygame.K_f:
+                        self.action_pos = self.display_to_game(mousepos)
+                        self.action_type = "units"
+                    if event.key == pygame.K_g:
+                        self.action_pos = self.display_to_game(mousepos)
+                        self.action_type = "dig"
+                    if event.key == pygame.K_c:
+                        self.action_pos = self.display_to_game(mousepos)
+                        self.action_type = "clear"
+            #
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_f and self.action_type == "units":
+                    self.action_func()
+                if event.key == pygame.K_g and self.action_type == "dig":
+                    self.action_func()
+                if event.key == pygame.K_c and self.action_type == "clear":
+                    self.action_func()
+            #
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1 and keys[pygame.K_LSHIFT]:
                     for obj in self.objects:
                         if obj._class == "unit" and obj.player == self.player and obj in self.player.selected_units:
                             mousepos = pygame.mouse.get_pos()
@@ -156,29 +178,6 @@ class World(Panel):
                             ]
                             obj.move_command(pos)
                     self.command_index += 1
-            if event.type == pygame.KEYUP:
-                if event.key == pygame.K_f and self.action_type == "units":
-                    self.action_type = None
-                    self.player.selected_units = []
-                    for obj in self.objects:
-                        if obj._class == "unit" and obj.player == self.player:
-                            pos = self.display_to_game(mousepos)
-                            corn_pos = [#позиция левого верхнего угла выделения
-                                pos[0] if self.action_pos[0] - pos[0] >= 0 else self.action_pos[0],
-                                pos[1] if self.action_pos[1] - pos[1] >= 0 else self.action_pos[1]
-                            ]
-                            corn_pos2 = [#позиция правого нижнего угла выделения
-                                pos[0] if self.action_pos[0] - pos[0] < 0 else self.action_pos[0],
-                                pos[1] if self.action_pos[1] - pos[1] < 0 else self.action_pos[1]
-                            ]
-                            if obj.pos[0] > corn_pos[0] - obj.w/2 and obj.pos[0] < corn_pos2[0] + obj.w/2 and \
-                                    obj.pos[1] > corn_pos[1] - obj.h/2 and obj.pos[1] < corn_pos2[1] + obj.h/2:
-                                self.player.selected_units.append(obj)
-        #
-        #ДЕЙСТВИЯ ИГРОКА
-        #
-        if self.action_type == "units":
-            pass
         #
         #ОБНОВЛЕНИЕ
         #
@@ -186,6 +185,52 @@ class World(Panel):
             for obj in self.objects:
                 obj.update(events)
         #
+
+    def action_func(self):
+        mousepos = pygame.mouse.get_pos()
+        pos = self.display_to_game(mousepos)
+        corn_pos = [  # позиция левого верхнего угла выделения
+            pos[0] if self.action_pos[0] - pos[0] >= 0 else self.action_pos[0],
+            pos[1] if self.action_pos[1] - pos[1] >= 0 else self.action_pos[1]
+        ]
+        corn_pos2 = [  # позиция правого нижнего угла выделения
+            pos[0] if self.action_pos[0] - pos[0] < 0 else self.action_pos[0],
+            pos[1] if self.action_pos[1] - pos[1] < 0 else self.action_pos[1]
+        ]
+        #
+        bl_corn_pos = [  # позиция левого верхнего угла выделения
+            int(corn_pos[0] // 16),
+            int(corn_pos[1] // 16)
+        ]
+        bl_corn_pos2 = [  # позиция правого нижнего угла выделения
+            int(corn_pos2[0] // 16),
+            int(corn_pos2[1] // 16)
+        ]
+        #
+        if self.action_type == "units":
+            self.player.selected_units = []
+            for obj in self.objects:
+                if obj._class == "unit" and obj.player == self.player:
+                    if obj.pos[0] > corn_pos[0] - obj.w / 2 and obj.pos[0] < corn_pos2[0] + obj.w / 2 and \
+                            obj.pos[1] > corn_pos[1] - obj.h / 2 and obj.pos[1] < corn_pos2[1] + obj.h / 2:
+                        self.player.selected_units.append(obj)
+        #
+        for x in range(bl_corn_pos[0], bl_corn_pos2[0] + 1):
+            for y in range(bl_corn_pos[1], bl_corn_pos2[1] + 1):
+                if self.test_for_block_pos((x, y)) and self.field[x][y].can_mined:
+                    if self.action_type == "dig":
+                        self.player.task_field[x][y] = 1
+                    elif self.action_type == "clear":
+                        self.player.task_field[x][y] = 0
+        #
+        if self.action_type == "clear" or self.action_type == "dig":
+            for x in range(int(bl_corn_pos[0] // 16), int(bl_corn_pos2[0] // 16 + 1)):
+                for y in range(int(bl_corn_pos[1] // 16), int(bl_corn_pos2[1] // 16 + 1)):
+                    if x >= 0 and x < self.ch_w and y >= 0 and y < self.ch_h:
+                        self.chunks[x][y].update_image()
+                        #pygame.draw.rect(self.chunks[x][y].scaled_image, (0, 0, 0), (0, 0, 100, 100))
+        #
+        self.action_type = None
 
     def draw(self, screen):
         mousepos = pygame.mouse.get_pos()
@@ -212,6 +257,10 @@ class World(Panel):
             img = pygame.Surface((abs(mousepos[0] - pos[0]), abs(mousepos[1] - pos[1])), pygame.SRCALPHA)
             if self.action_type == "units":
                 img.fill((255, 128, 0, 128))
+            elif self.action_type == "dig":
+                img.fill((255, 0, 0, 100))
+            elif self.action_type == "clear":
+                img.fill((0, 100, 255, 100))
             screen.blit(img, (pos[0] if mousepos[0] - pos[0] >= 0 else mousepos[0],
                               pos[1] if mousepos[1] - pos[1] >= 0 else mousepos[1]))
         #
