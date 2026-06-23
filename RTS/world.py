@@ -56,7 +56,6 @@ class World(Panel):
                     self.ground_field[x][y] = Sand(self, (x, y))
                 else:
                     self.field[x][y] = Water(self, (x, y))
-                self.field[x][y] = Stone(self, (x, y))
         self.chunks = [[Chunk(self, (x, y)) for y in range(self.ch_w)] for x in range(self.ch_h)]
 
     def update(self, events):
@@ -247,10 +246,10 @@ class World(Panel):
         for obj in self.objects:
             obj.draw(screen)
         #
-        '''for x in range(int(self.cam_pos[0] / 256 - count[0] / 2), int(self.cam_pos[0] / 256 + count[0] / 2) + 1):
+        for x in range(int(self.cam_pos[0] / 256 - count[0] / 2), int(self.cam_pos[0] / 256 + count[0] / 2) + 1):
             for y in range(int(self.cam_pos[1] / 256 - count[1] / 2), int(self.cam_pos[1] / 256 + count[1] / 2) + 1):
                 if x >= 0 and x < self.ch_w and y >= 0 and y < self.ch_h:
-                    screen.blit(self.chunks[x][y].scaled_fog_image, self.game_to_display((x * 256, y * 256)))'''
+                    screen.blit(self.chunks[x][y].scaled_fog_image, self.game_to_display((x * 256, y * 256)))
         #
         if self.action_type != None:
             pos = self.game_to_display(self.action_pos)

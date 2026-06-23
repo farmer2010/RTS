@@ -24,7 +24,7 @@ class Chunk():
         if self.world.zoom != self.image_zoom:
             self.image_zoom = self.world.zoom
             self.scaled_image = pygame.transform.scale(self.image, (math.ceil(256 * self.world.zoom), math.ceil(256 * self.world.zoom)))
-            #self.scaled_fog_image = pygame.transform.scale(self.fog_image, (math.ceil(256 * self.world.zoom), math.ceil(256 * self.world.zoom)))
+            self.scaled_fog_image = pygame.transform.scale(self.fog_image, (math.ceil(256 * self.world.zoom), math.ceil(256 * self.world.zoom)))
         screen.blit(self.scaled_image,
                     [(self.pos[0] - self.world.cam_pos[0] / 256) * 256 * self.world.zoom + self.world.display_W / 2,
                      (self.pos[1] - self.world.cam_pos[1] / 256) * 256 * self.world.zoom + self.world.display_H / 2])
@@ -39,9 +39,9 @@ class Chunk():
                 self.image.blit(self.world.field[self.pos[0] * 16 + x][self.pos[1] * 16 + y].image, (x * 16, y * 16))
                 if self.world.player.task_field[self.pos[0] * 16 + x][self.pos[1] * 16 + y] == 1:
                     self.image.blit(dig_img,(x * 16, y * 16))
-                #if self.world.player.fog[self.pos[0] * 16 + x][self.pos[1] * 16 + y] == 0:
-                #    self.fog_image.blit(self.dark_img, (x * 16, y * 16))
-                #else:
-                #    self.fog_image.blit(self.inv_img, (x * 16, y * 16))
+                if self.world.player.fog[self.pos[0] * 16 + x][self.pos[1] * 16 + y] == 0:
+                    self.fog_image.blit(self.dark_img, (x * 16, y * 16))
+                else:
+                    self.fog_image.blit(self.inv_img, (x * 16, y * 16))
         self.scaled_image = pygame.transform.scale(self.image, (math.ceil(256 * self.world.zoom), math.ceil(256 * self.world.zoom)))
-        #self.scaled_fog_image = pygame.transform.scale(self.fog_image, (math.ceil(256 * self.world.zoom), math.ceil(256 * self.world.zoom)))
+        self.scaled_fog_image = pygame.transform.scale(self.fog_image, (math.ceil(256 * self.world.zoom), math.ceil(256 * self.world.zoom)))

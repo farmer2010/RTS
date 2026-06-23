@@ -4,7 +4,7 @@ from blocks import *
 
 class Worker(Unit):
     def __init__(self, world, player, pos):
-        Unit.__init__(self, world, player, "worker", pos, 10, 10)
+        Unit.__init__(self, world, player, "worker", pos, 10, 10, fog_radius=10, speed=4)
         self.image.fill((30, 100, 255))
 
     def update(self, events):

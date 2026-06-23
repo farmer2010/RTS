@@ -25,6 +25,7 @@ class Unit(Entity):
         #
         self.update_unit_field("add")
         self.update_fog("add", [self.pos[0] // 16, self.pos[1] // 16])
+        self.fog_presets = self.generate_fog_presets(fog_radius)
 
     def update(self, events):
         '''for event in events:
@@ -75,6 +76,65 @@ class Unit(Entity):
                 self.command = ((pos[0], pos[1]), self.world.command_index)
         self.stop_flag = 0
 
+    def generate_fog_presets(self, fog_radius):
+        """
+        Генерирует пресеты изменения тумана войны для 8 направлений движения
+
+        Args:
+            fog_radius: радиус обзора юнита
+
+        Returns:
+            Словарь, где ключ - направление (0-7), значение - кортеж (удаляемые_клетки, добавляемые_клетки)
+            Направления: 0-вверх, 1-вверх-вправо, 2-вправо, 3-вниз-вправо,
+                         4-вниз, 5-вниз-влево, 6-влево, 7-влево-вверх
+        """
+
+        # Рассчитываем все клетки в радиусе обзора
+        radius_int = fog_radius
+
+        # Векторы движения для 8 направлений
+        direction_vectors = [
+            (0, -1),  # вверх
+            (1, -1),  # вверх-вправо
+            (1, 0),  # вправо
+            (1, 1),  # вниз-вправо
+            (0, 1),  # вниз
+            (-1, 1),  # вниз-влево
+            (-1, 0),  # влево
+            (-1, -1)  # влево-вверх
+        ]
+
+        presets = []
+
+        for direction in range(8):
+            dx, dy = direction_vectors[direction]
+
+            # Множества клеток для старой и новой позиции
+            # Смещаем все клетки на вектор движения
+            new_cells = []
+            old_cells = []
+
+            # Для каждой клетки в радиусе определяем, изменится ли ее состояние
+            for cx in range(-radius_int - 1, radius_int + 2):
+                for cy in range(-radius_int - 1, radius_int + 2):
+                    # Новая позиция клетки после движения юнита
+                    new_cx, new_cy = cx + dx, cy + dy
+
+                    # Проверяем, была ли эта клетка видна раньше и видна ли сейчас
+                    was_visible = cx ** 2 + cy ** 2 <= fog_radius ** 2
+                    will_be_visible = new_cx ** 2 + new_cy ** 2 <= fog_radius ** 2
+
+                    # Если клетка была видна, но перестанет быть видимой - удаляем
+                    if was_visible and not will_be_visible:
+                        old_cells.append((cx, cy))
+
+                    # Если клетка не была видна, но станет видимой - добавляем
+                    #print((cx, cy), was_visible, will_be_visible)
+                    if not was_visible and will_be_visible:
+                        new_cells.append((new_cx, new_cy))
+            presets.append([old_cells, new_cells])
+        return presets
+
     def update_fog(self, func, pos):
         for x in range(int(pos[0] - self.fog_radius), int(pos[0] + self.fog_radius + 1)):
             for y in range(int(pos[1] - self.fog_radius), int(pos[1] + self.fog_radius + 1)):
@@ -118,6 +178,17 @@ class Unit(Entity):
         self.player.units.remove(self)
 
     def move(self, speed, rotate):
+        moves = {
+            (0, -1): 0,
+            (1, -1): 1,
+            (1, 0): 2,
+            (1, 1): 3,
+            (0, 1): 4,
+            (-1, 1): 5,
+            (-1, 0): 6,
+            (-1, -1): 7
+        }
+        #
         self.update_unit_field("remove")
         pos = [int(self.pos[0] // 16), int(self.pos[1] // 16)]
         c = 1
@@ -125,9 +196,27 @@ class Unit(Entity):
             c = self.world.ground_field[pos[0]][pos[1]].speed
         mov = Entity.move(self, speed * c, rotate)
         new_pos = [self.pos[0] // 16, self.pos[1] // 16]
-        #if new_pos != pos:
-        #    self.update_fog("remove", pos)
-        #    self.update_fog("add", new_pos)
+        if new_pos != pos:
+            rotate = moves[(new_pos[0] - pos[0], new_pos[1] - pos[1])]
+            for p in self.fog_presets[rotate][0]:
+                npos = [pos[0] + p[0], pos[1] + p[1]]
+                if self.world.test_for_block_pos(npos):
+                    if self in self.player.fog_units[npos[0]][npos[1]]:
+                        self.player.fog_units[npos[0]][npos[1]].remove(self)
+                        self.player.fog[npos[0]][npos[1]] = 0
+            #
+            for p in self.fog_presets[rotate][1]:
+                npos = [pos[0] + p[0], pos[1] + p[1]]
+                if self.world.test_for_block_pos(npos):
+                    if self not in self.player.fog_units[npos[0]][npos[1]]:
+                        self.player.fog_units[npos[0]][npos[1]].append(self)
+                        self.player.fog[npos[0]][npos[1]] = 2
+            #
+            count = [math.ceil((self.fog_radius + 1) * 2 / 16), math.ceil((self.fog_radius + 1) * 2 / 16)]  # количество видимых чанков
+            for x in range(int(self.pos[0] / 256 - count[0] / 2), int(self.pos[0] / 256 + count[0] / 2) + 1):
+                for y in range(int(self.pos[1] / 256 - count[1] / 2), int(self.pos[1] / 256 + count[1] / 2) + 1):
+                    if x >= 0 and x < self.world.ch_w and y >= 0 and y < self.world.ch_h:
+                        self.world.chunks[x][y].update_image()
         self.update_unit_field("add")
         return(mov)
 
