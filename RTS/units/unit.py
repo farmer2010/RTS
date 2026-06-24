@@ -78,7 +78,7 @@ class Unit(Entity):
                 if not coll_obj.inv_flag and not self.inv_flag:
                     sp = 3
                     rotate = math.atan2(coll_obj.pos[1] - self.pos[1], coll_obj.pos[0] - self.pos[0])
-                    rotate = 2 * math.pi - rotate
+                    rotate = rotate - math.pi
                     dx = math.cos(rotate) * sp
                     dy = math.sin(rotate) * sp
                     self.pos[0] += dx
