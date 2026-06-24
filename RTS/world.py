@@ -59,7 +59,7 @@ class World(Panel):
                     self.ground_field[x][y] = Sand(self, (x, y))
                 else:
                     self.field[x][y] = Water(self, (x, y))
-                self.field[x][y] = Air(self, (x, y))
+                self.field[x][y] = Stone(self, (x, y))
         self.chunks = [[Chunk(self, (x, y)) for y in range(self.ch_w)] for x in range(self.ch_h)]
         #
         self.add(Panel((0, 0, 100, 100)))
@@ -272,16 +272,16 @@ class World(Panel):
         #
         if self.action_type != None:
             pos = self.game_to_display(self.action_pos)
+            mpos = self.display_to_game(mousepos)
             img = pygame.Surface((abs(mousepos[0] - pos[0]), abs(mousepos[1] - pos[1])), pygame.SRCALPHA)
             if self.action_type == "clear" or self.action_type == "dig":
-                mpos = self.display_to_game(mousepos)
                 corn_pos = [  # позиция левого верхнего угла выделения
-                    (mpos[0] if self.action_pos[0] - mpos[0] >= 0 else self.action_pos[0]) // 16 * 16,
-                    (mpos[1] if self.action_pos[1] - mpos[1] >= 0 else self.action_pos[1]) // 16 * 16
+                    min(mpos[0], self.action_pos[0]) // 16 * 16,
+                    min(mpos[1], self.action_pos[1]) // 16 * 16
                 ]
                 corn_pos2 = [  # позиция правого нижнего угла выделения
-                    (mpos[0] if self.action_pos[0] - mpos[0] < 0 else self.action_pos[0]) // 16 * 16 + 16,
-                    (mpos[1] if self.action_pos[1] - mpos[1] < 0 else self.action_pos[1]) // 16 * 16 + 16
+                    max(mpos[0], self.action_pos[0]) // 16 * 16 + 16,
+                    max(mpos[1], self.action_pos[1]) // 16 * 16 + 16
                 ]
                 d_corn_pos = self.game_to_display(corn_pos)
                 d_corn_pos2 = self.game_to_display(corn_pos2)
@@ -298,9 +298,9 @@ class World(Panel):
                 screen.blit(img, (min(pos[0], mousepos[0]),
                                   min(pos[1], mousepos[1])))
             elif self.action_type == "clear" or self.action_type == "dig":
-
-                screen.blit(img, ((min(pos[0], mousepos[0])) // (16 * self.zoom) * 16 * self.zoom,
-                                  (min(pos[1], mousepos[1])) // (16 * self.zoom) * 16 * self.zoom))
+                corn_pos = self.game_to_display([min(mpos[0], self.action_pos[0]) // 16 * 16, min(mpos[1], self.action_pos[1]) // 16 * 16])
+                screen.blit(img, (min(pos[0], corn_pos[0]),
+                                  min(pos[1], corn_pos[1])))
         #
         utils.render_text(str(self.zoom), (0, 25), screen, color=(255, 0, 0))
         utils.render_text(str(d), (0, 50), screen, color=(255, 0, 0))
