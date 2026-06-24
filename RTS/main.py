@@ -25,5 +25,5 @@ while keep_going:
     buttons.update(screen, events)
     screen.blit(font.render(str(round(timer.get_fps(), 2)), True, (255, 0, 0)), (0, 0))
     pygame.display.update()
-    timer.tick(60)
+    timer.tick(30)
 pygame.quit()

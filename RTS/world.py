@@ -22,7 +22,7 @@ class World(Panel):
         self.min_zoom = 1
         self.max_zoom = 6
         self.cam_pos = [w * 256 / 2, h * 256 / 2]#позиция центра камеры
-        self.cam_speed = 5
+        self.cam_speed = 10
         self.display_W = W
         self.display_H = H
         self.zoom_timer = 0
@@ -111,8 +111,7 @@ class World(Panel):
             if wheel != 0:
                 self.zoom_timer = 20
                 self.zoom_speed = (max(min(self.zoom + wheel, self.max_zoom), self.min_zoom) - self.zoom) / 20
-        if self.zoom_timer % 2 == 0:
-            self.zoom += self.zoom_speed * 2
+        self.zoom += self.zoom_speed
         if self.zoom_timer > 0:
             self.zoom_timer -= 1
         #

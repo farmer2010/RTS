@@ -55,8 +55,8 @@ class Entity():
                         yv = -0.25
                     elif yv < 0.25 and yv > 0:
                         yv = 0.25
-                    collide_x[3].move(speed * 0.5, math.atan2(yv, dx))
-                coll_obj_x = collide_x[3]
+                    if collide_x[3] != coll_obj_s:
+                        collide_x[3].move(speed * 0.5, math.atan2(yv, dx))
             self.pos[1] += dy
             collide_y = self.collide(0, (dy < 0)*2-1)
             if collide_y[0]:
@@ -72,8 +72,8 @@ class Entity():
                         xv = -0.25
                     elif xv < 0.25 and xv > 0:
                         xv = 0.25
-                    collide_y[3].move(speed * 0.5, math.atan2(dy, xv))
-                coll_obj_y = collide_y[3]
+                    if collide_y[3] != coll_obj_s:
+                        collide_y[3].move(speed * 0.5, math.atan2(dy, xv))
         else:
             coll = 1
         #

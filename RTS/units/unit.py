@@ -68,6 +68,40 @@ class Unit(Entity):
                         self.move(self.speed, 0.75 * math.pi)
                     elif move_keys[1]:
                         self.move(self.speed, 0.25 * math.pi)
+        #
+        #РАСТАЛКИВАНИЕ
+        #
+        collide = self.collide(0, 0)
+        coll_obj = collide[3]
+        if collide[0]:
+            if coll_obj != None and coll_obj._class == "unit":
+                if not coll_obj.inv_flag and not self.inv_flag:
+                    sp = 3
+                    rotate = math.atan2(coll_obj.pos[1] - self.pos[1], coll_obj.pos[0] - self.pos[0])
+                    rotate = 2 * math.pi - rotate
+                    dx = math.cos(rotate) * sp
+                    dy = math.sin(rotate) * sp
+                    self.pos[0] += dx
+                    collide_x = self.collide((dx < 0) * 2 - 1, 0)
+                    un_x = 0
+                    if collide_x[3] != None and collide_x[3]._class == "unit":
+                        un_x = 1
+                    if collide_x[0] and not un_x:
+                        if dx > 0.01:
+                            self.pos[0] = collide_x[1] - self.w / 2
+                        elif dx < 0.01:
+                            self.pos[0] = collide_x[1] + self.w / 2
+                    #
+                    self.pos[1] += dy
+                    collide_y = self.collide(0, (dy < 0) * 2 - 1)
+                    un_y = 0
+                    if collide_y[3] != None and collide_y[3]._class == "unit":
+                        un_y = 1
+                    if collide_y[0] and not un_y:
+                        if dy > 0.01:
+                            self.pos[1] = collide_y[2] - self.h / 2
+                        elif dy < 0.01:
+                            self.pos[1] = collide_y[2] + self.h / 2
 
     def move_command(self, pos, move_to_close=0):
         if self.world.test_for_block_pos(pos):
@@ -235,20 +269,6 @@ class Unit(Entity):
                         self.pos[1] > self.path[self.path_index][1] * 16 + self.h/2 + 1 - self.speed and \
                         self.pos[1] < self.path[self.path_index][1] * 16 + self.h/2 + 1 + self.speed:
                     self.path_index += 1
-                '''if self.stop_timer == 0 or 1:
-                    collide = self.move(self.speed, rotate)
-                    tm1 = 0
-                    tm2 = 0
-                    tm3 = 0
-                    if collide[0]:
-                        if collide[1] != None and collide[1]._class == "unit" and collide[1].stop_timer == 0:
-                            tm1 = 1
-                        if collide[2] != None and collide[2]._class == "unit" and collide[2].stop_timer == 0:
-                            tm2 = 1
-                        if collide[3] != None and collide[3]._class == "unit" and collide[3].stop_timer == 0:
-                            tm3 = 1
-                    if tm1 or tm2 or tm3:
-                        self.stop_timer = 15'''
                 collide = self.move(self.speed, rotate)
                 if collide[0]:
                     self.stop_timer += 1
@@ -257,11 +277,16 @@ class Unit(Entity):
                     self.inv_flag = 0
                 if self.stop_timer == 10:
                     self.inv_flag = 1
+                if self.stop_timer > 30 and (self.pos[0] // 16 - self.command[0][0]) ** 2 + (self.pos[1] // 16 - self.command[0][1]) ** 2 < 16:
+                    self.path = []
+                    self.command = None
+                    self.inv_flag = 0
+                    self.stop_flag = 1
                 #if collide:
-                #    self.path = self.pathfind((int((self.pos[0] - self.w/2) // 16), int((self.pos[1] - self.h/2) // 16)), (self.command[0], self.command[1]))
+                #    self.path = self.pathfind((int((self.pos[0] - self.w/2) // 16), int((self.pos[1] - self.h/2) // 16)), (self.command[0][0], self.command[0][1]))
                 #    self.path_index = 1
                 #elif len(self.path) == 0:
-                #    self.path = self.pathfind((int((self.pos[0] - self.w / 2) // 16), int((self.pos[1] - self.h / 2) // 16)), (self.command[0], self.command[1]))
+                #    self.path = self.pathfind((int((self.pos[0] - self.w / 2) // 16), int((self.pos[1] - self.h / 2) // 16)), (self.command[0][0], self.command[0][1]))
                 #    self.path_index = 1
             else:
                 self.path_index += 1
