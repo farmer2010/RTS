@@ -56,9 +56,8 @@ class Chunk():
         if self.world.field[pos[0]][pos[1]].type == "air":
             img.blit(self.world.ground_field[pos[0]][pos[1]].image, (0, 0))
         img.blit(self.world.field[pos[0]][pos[1]].image, (0, 0))
-        pr = int((100 - self.world.field[pos[0]][pos[1]].progress) // 17)
+        pr = int((1000 - self.world.field[pos[0]][pos[1]].progress) // 170)
         if pr > 0:
-            print(pr)
             img.blit(crack[pr - 1], (0, 0))
         if self.world.player.task_field[pos[0]][pos[1]] == 1:
             img.blit(dig_img, (0, 0))

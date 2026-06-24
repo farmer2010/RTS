@@ -1,5 +1,4 @@
 import pygame
-
 from farmgui import *
 from blocks import *
 from chunk import *
@@ -32,8 +31,10 @@ class World(Panel):
         self.command_index = 0
         #
         self.draw_path = 0
-        self.draw_corners = 0
+        self.draw_command = 0
         self.draw_path_index = 0
+        self.draw_pos = 0
+        self.air_generator = Air
         #
         self.objects = []
         self.players = [UserPlayer(self), AiPlayer(self)]
@@ -59,7 +60,7 @@ class World(Panel):
                     self.ground_field[x][y] = Sand(self, (x, y))
                 else:
                     self.field[x][y] = Water(self, (x, y))
-                self.field[x][y] = Stone(self, (x, y))
+                #self.field[x][y] = Air(self, (x, y))
         self.chunks = [[Chunk(self, (x, y)) for y in range(self.ch_w)] for x in range(self.ch_h)]
         #
         self.add(Panel((0, 0, 100, 100)))
@@ -121,8 +122,9 @@ class World(Panel):
                 int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) // (16 * self.zoom))
             ]
             if self.test_for_block_pos(blockpos):
-                self.field[blockpos[0]][blockpos[1]] = Stone(self, blockpos)
-                self.chunks[blockpos[0] // 16][blockpos[1] // 16].update_image()
+                if self.field[blockpos[0]][blockpos[1]].type == "air":
+                    self.field[blockpos[0]][blockpos[1]] = Stone(self, blockpos)
+                    self.chunks[blockpos[0] // 16][blockpos[1] // 16].update_image()
         #
         if pygame.mouse.get_pressed()[2]:#ломание
             self.action_type = None
@@ -131,8 +133,8 @@ class World(Panel):
                 int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) // (16 * self.zoom))
             ]
             if self.test_for_block_pos(blockpos):
-                self.field[blockpos[0]][blockpos[1]] = Air(self, blockpos)
-                self.chunks[blockpos[0] // 16][blockpos[1] // 16].image_changes = 1
+                if self.field[blockpos[0]][blockpos[1]].type != "air":
+                    self.field[blockpos[0]][blockpos[1]].remove_block()
         #
         for event in events:
             if event.type == pygame.KEYDOWN:
@@ -149,9 +151,11 @@ class World(Panel):
                 if event.key == pygame.K_F1:
                     self.draw_path = not self.draw_path
                 if event.key == pygame.K_F2:
-                    self.draw_corners = not self.draw_corners
+                    self.draw_command = not self.draw_command
                 if event.key == pygame.K_F3:
                     self.draw_path_index = not self.draw_path_index
+                if event.key == pygame.K_F4:
+                    self.draw_pos = not self.draw_pos
                 if event.key == pygame.K_ESCAPE:
                     self.pause = not self.pause
                 if self.action_type == None:
@@ -307,8 +311,15 @@ class World(Panel):
         utils.render_text(str(self.cam_pos), (0, 75), screen, color=(255, 0, 0))
         utils.render_text("pause: " + str(self.pause), (0, 100), screen, color=(255, 0, 0))
         utils.render_text("draw path: " + str(self.draw_path), (0, 125), screen, color=(255, 0, 0))
-        utils.render_text("draw corners: " + str(self.draw_corners), (0, 150), screen, color=(255, 0, 0))
+        utils.render_text("draw command: " + str(self.draw_command), (0, 150), screen, color=(255, 0, 0))
         utils.render_text("draw path index: " + str(self.draw_path_index), (0, 175), screen, color=(255, 0, 0))
+        utils.render_text("draw pos: " + str(self.draw_pos), (0, 200), screen, color=(255, 0, 0))
+        if self.draw_pos:
+            blockpos = [
+                int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) // (16 * self.zoom)),
+                int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) // (16 * self.zoom))
+            ]
+            utils.render_text(str(blockpos), mousepos, screen, color=(255, 0, 0))
 
     def display_to_game(self, disp_pos):#перевод экранных координат в игровые
         pos = [

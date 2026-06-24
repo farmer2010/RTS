@@ -8,10 +8,11 @@ import heapq
 font = pygame.font.SysFont(None, 24)
 
 class Unit(Entity):
-    def __init__(self, world, player, _type, pos, w, h, speed=3, fog_radius=15):
+    def __init__(self, world, player, _type, pos, w, h, speed=3, fog_radius=15, health=100):
         Entity.__init__(self, world, player, "unit", pos, w, h)
         self.type = _type
         self.speed = speed
+        self.health = health
         self.path = []
         self.path_index = 0
         self.target = None
@@ -68,12 +69,14 @@ class Unit(Entity):
                     elif move_keys[1]:
                         self.move(self.speed, 0.25 * math.pi)
 
-    def move_command(self, pos):
+    def move_command(self, pos, move_to_close=0):
         if self.world.test_for_block_pos(pos):
-            self.path = self.pathfind((int((self.pos[0] - self.w / 2) // 16), int((self.pos[1] - self.h / 2) // 16)),(pos[0], pos[1]))
+            self.path = self.pathfind((int((self.pos[0] - self.w / 2) // 16), int((self.pos[1] - self.h / 2) // 16)),(pos[0], pos[1]), move_to_close=move_to_close)
             self.path_index = 1
             if len(self.path) > 0:
                 self.command = ((pos[0], pos[1]), self.world.command_index)
+            else:
+                self.command = None
         self.stop_flag = 0
 
     def generate_fog_presets(self, fog_radius):
@@ -264,18 +267,20 @@ class Unit(Entity):
                 self.path_index += 1
         else:#конец маршрута
             self.path = []
+            self.command = None
             self.inv_flag = 0
             self.stop_flag = 1
 
-    def pathfind(self, start_pos, end_pos):
+    def pathfind(self, start_pos, end_pos, move_to_close=0):
         field = self.world.field
         width = len(field)
         height = len(field[0])
         # Проверка корректности начальной и конечной позиций
         if field[start_pos[0]][start_pos[1]].has_hitbox:
             return []
-        if field[end_pos[0]][end_pos[1]].has_hitbox:
-            return []
+        if not move_to_close:
+            if field[end_pos[0]][end_pos[1]].has_hitbox:
+                return []
         # Если старт и финиш совпадают
         if start_pos == end_pos:
             return []
@@ -324,6 +329,16 @@ class Unit(Entity):
                 # Проверка выхода за границы карты
                 if not (0 <= neighbor[0] < width and 0 <= neighbor[1] < height):
                     continue
+                #для рабочих есть возможность подъехать к закрытой клетке
+                if move_to_close and neighbor[0] == end_pos[0] and neighbor[1] == end_pos[1] and field[neighbor[0]][neighbor[1]].has_hitbox:
+                    # Восстанавливаем путь
+                    path = []
+                    while current in came_from:
+                        path.append(current)
+                        current = came_from[current]
+                    path.append(start_pos)
+                    path.reverse()
+                    return path
                 # Если сосед уже в закрытом множестве, пропускаем
                 if neighbor in closed_set:
                     continue
@@ -405,15 +420,10 @@ class Unit(Entity):
                 img = pygame.Surface((16 * self.world.zoom, 16 * self.world.zoom), pygame.SRCALPHA)
                 img.fill((0, 128, 255, 128))
                 screen.blit(img, self.world.game_to_display((pos[0] * 16, pos[1] * 16)))
-        if self.world.draw_corners:
-            img = pygame.Surface((16 * self.world.zoom, 16 * self.world.zoom), pygame.SRCALPHA)
-            img.fill((128, 255, 0, 128))
-            screen.blit(img, self.world.game_to_display(((self.pos[0] - self.w/2) // 16 * 16, (self.pos[1] - self.h/2) // 16 * 16)))
-            screen.blit(img, self.world.game_to_display(((self.pos[0] + self.w / 2) // 16 * 16, (self.pos[1] - self.h / 2) // 16 * 16)))
-            screen.blit(img, self.world.game_to_display(((self.pos[0] - self.w / 2) // 16 * 16, (self.pos[1] + self.h / 2) // 16 * 16)))
-            screen.blit(img, self.world.game_to_display(((self.pos[0] + self.w / 2) // 16 * 16, (self.pos[1] + self.h / 2) // 16 * 16)))
         p = self.world.game_to_display(self.pos)
         #col = self.collide(0, 0)
         if self.world.draw_path_index:
             screen.blit(font.render(str(self.path_index), 1, (0, 0, 0)), p)
+        if self.world.draw_command:
+            screen.blit(font.render(str(self.command), 1, (0, 0, 0)), [p[0], p[1] + 15])
         #screen.blit(font.render(str(col[0]) + " " + str(col[3]), 1, (0, 0, 0)), (p[0], p[1] + 15))

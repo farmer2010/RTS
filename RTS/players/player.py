@@ -13,7 +13,8 @@ class Player():
             "copper" : 0,
         }
         self.fog = [[0 for y in range(self.world.h)] for x in range(self.world.w)]#0 - туман, 1 - неактивная область, 2 - активная область
-        self.task_field = [[None for y in range(self.world.h)] for x in range(self.world.w)]#0 - нет, 1 - копать, <block> - ставить блок
+        self.task_field = [[0 for y in range(self.world.h)] for x in range(self.world.w)]#0 - нет, 1 - копать, <block> - ставить блок
+        self.task_units = [[None for y in range(self.world.h)] for x in range(self.world.w)]
         self.fog_units =  [[[] for y in range(self.world.h)] for x in range(self.world.w)]
 
     def update(self, events):
