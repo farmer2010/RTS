@@ -6,10 +6,14 @@ class Worker(Unit):
     def __init__(self, world, player, pos):
         Unit.__init__(self, world, player, "worker", pos, 10, 10, fog_radius=10, speed=4)
         self.image.fill((30, 100, 255))
+        self.timer = 0
 
     def update(self, events):
         Unit.update(self, events)
         self.dig()
+        self.timer += 1
+        if self.timer >= 60:
+            self.timer = 0
 
     def dig(self):
         pos = [int(self.pos[0] / 16), int(self.pos[1] / 16)]
@@ -21,4 +25,5 @@ class Worker(Unit):
                         if self.world.field[x][y].progress <= 0:
                             self.player.task_field[x][y] = 0
                             self.world.field[x][y] = Air(self.world, pos)
-                            self.world.chunks[int(x // 16)][int(y // 16)].update_image()
+                        self.world.chunks[int(x // 16)][int(y // 16)].image_changes = 1
+                        return

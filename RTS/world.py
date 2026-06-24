@@ -9,9 +9,12 @@ import opensimplex
 import math
 from players import *
 
+W = pygame.display.Info().current_w
+H = pygame.display.Info().current_h
+
 class World(Panel):
     def __init__(self, w=5, h=5):
-        Panel.__init__(self, (0, 0, 1920, 1080))
+        Panel.__init__(self, (0, 0, W, H))
         self.ch_w = w
         self.ch_h = h
         self.w = w * 16
@@ -21,8 +24,8 @@ class World(Panel):
         self.max_zoom = 6
         self.cam_pos = [w * 256 / 2, h * 256 / 2]#позиция центра камеры
         self.cam_speed = 5
-        self.display_W = pygame.display.Info().current_w
-        self.display_H = pygame.display.Info().current_h
+        self.display_W = W
+        self.display_H = H
         self.zoom_timer = 0
         self.zoom_speed = 0
         self.pause = 0
@@ -58,6 +61,8 @@ class World(Panel):
                     self.field[x][y] = Water(self, (x, y))
                 self.field[x][y] = Air(self, (x, y))
         self.chunks = [[Chunk(self, (x, y)) for y in range(self.ch_w)] for x in range(self.ch_h)]
+        #
+        self.add(Panel((0, 0, 100, 100)))
 
     def update(self, events):
         keys = pygame.key.get_pressed()
@@ -120,13 +125,14 @@ class World(Panel):
                 self.chunks[blockpos[0] // 16][blockpos[1] // 16].update_image()
         #
         if pygame.mouse.get_pressed()[2]:#ломание
+            self.action_type = None
             blockpos = [
                 int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) // (16 * self.zoom)),
                 int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) // (16 * self.zoom))
             ]
             if self.test_for_block_pos(blockpos):
                 self.field[blockpos[0]][blockpos[1]] = Air(self, blockpos)
-                self.chunks[blockpos[0] // 16][blockpos[1] // 16].update_image()
+                self.chunks[blockpos[0] // 16][blockpos[1] // 16].image_changes = 1
         #
         for event in events:
             if event.type == pygame.KEYDOWN:
@@ -184,6 +190,12 @@ class World(Panel):
         if not self.pause:
             for obj in self.objects:
                 obj.update(events)
+        #
+        for x in range(self.ch_w):
+            for y in range(self.ch_h):
+                if self.chunks[x][y].image_changes:
+                    self.chunks[x][y].update_image()
+                    self.chunks[x][y].image_changes = False
         #
         for x in range(self.ch_w):
             for y in range(self.ch_h):
@@ -253,22 +265,42 @@ class World(Panel):
         for obj in self.objects:
             obj.draw(screen)
         #
-        for x in range(int(self.cam_pos[0] / 256 - count[0] / 2), int(self.cam_pos[0] / 256 + count[0] / 2) + 1):
+        '''for x in range(int(self.cam_pos[0] / 256 - count[0] / 2), int(self.cam_pos[0] / 256 + count[0] / 2) + 1):
             for y in range(int(self.cam_pos[1] / 256 - count[1] / 2), int(self.cam_pos[1] / 256 + count[1] / 2) + 1):
                 if x >= 0 and x < self.ch_w and y >= 0 and y < self.ch_h:
-                    screen.blit(self.chunks[x][y].scaled_fog_image, self.game_to_display((x * 256, y * 256)))
+                    screen.blit(self.chunks[x][y].scaled_fog_image, self.game_to_display((x * 256, y * 256)))'''
         #
         if self.action_type != None:
             pos = self.game_to_display(self.action_pos)
             img = pygame.Surface((abs(mousepos[0] - pos[0]), abs(mousepos[1] - pos[1])), pygame.SRCALPHA)
+            if self.action_type == "clear" or self.action_type == "dig":
+                mpos = self.display_to_game(mousepos)
+                corn_pos = [  # позиция левого верхнего угла выделения
+                    (mpos[0] if self.action_pos[0] - mpos[0] >= 0 else self.action_pos[0]) // 16 * 16,
+                    (mpos[1] if self.action_pos[1] - mpos[1] >= 0 else self.action_pos[1]) // 16 * 16
+                ]
+                corn_pos2 = [  # позиция правого нижнего угла выделения
+                    (mpos[0] if self.action_pos[0] - mpos[0] < 0 else self.action_pos[0]) // 16 * 16 + 16,
+                    (mpos[1] if self.action_pos[1] - mpos[1] < 0 else self.action_pos[1]) // 16 * 16 + 16
+                ]
+                d_corn_pos = self.game_to_display(corn_pos)
+                d_corn_pos2 = self.game_to_display(corn_pos2)
+                img = pygame.Surface((abs(d_corn_pos[0] - d_corn_pos2[0]), abs(d_corn_pos[1] - d_corn_pos2[1])), pygame.SRCALPHA)
+            #
             if self.action_type == "units":
                 img.fill((255, 128, 0, 128))
             elif self.action_type == "dig":
                 img.fill((255, 0, 0, 100))
             elif self.action_type == "clear":
                 img.fill((0, 100, 255, 100))
-            screen.blit(img, (pos[0] if mousepos[0] - pos[0] >= 0 else mousepos[0],
-                              pos[1] if mousepos[1] - pos[1] >= 0 else mousepos[1]))
+            #
+            if self.action_type == "units":
+                screen.blit(img, (min(pos[0], mousepos[0]),
+                                  min(pos[1], mousepos[1])))
+            elif self.action_type == "clear" or self.action_type == "dig":
+
+                screen.blit(img, ((min(pos[0], mousepos[0])) // (16 * self.zoom) * 16 * self.zoom,
+                                  (min(pos[1], mousepos[1])) // (16 * self.zoom) * 16 * self.zoom))
         #
         utils.render_text(str(self.zoom), (0, 25), screen, color=(255, 0, 0))
         utils.render_text(str(d), (0, 50), screen, color=(255, 0, 0))

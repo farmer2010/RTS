@@ -3,7 +3,9 @@ from world import *
 import pygame
 pygame.init()
 
-screen = pygame.display.set_mode((1920, 1080))
+W = pygame.display.Info().current_w
+H = pygame.display.Info().current_h
+screen = pygame.display.set_mode((W, H))
 pygame.display.set_caption("RTS game")
 keep_going = 1
 timer = pygame.time.Clock()
