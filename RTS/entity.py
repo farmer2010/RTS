@@ -143,7 +143,8 @@ class Entity():
         return(0, 0, 0, None, "no")
 
     def collide_block(self, bl_x, bl_y):
-        if self.pos[0] > bl_x - self.w/2 and self.pos[0] < bl_x + 16 + self.w/2 and self.pos[1] > bl_y - self.h/2 and self.pos[1] < bl_y + 16 + self.h/2:
+        if (abs(self.pos[0] - (bl_x + 8)) < self.w/2 + 8 and abs(self.pos[1] - (bl_y + 8)) < self.h/2 + 8 and
+                abs(abs(self.pos[0] - (bl_x + 8)) - (self.w/2 + 8)) > 0.01 and abs(abs(self.pos[1] - (bl_y + 8)) - (self.h/2 + 8)) > 0.01):
             return(1)
         return(0)
 

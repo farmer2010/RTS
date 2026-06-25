@@ -60,7 +60,7 @@ class World(Panel):
                     self.ground_field[x][y] = Sand(self, (x, y))
                 else:
                     self.field[x][y] = Water(self, (x, y))
-                #self.field[x][y] = Air(self, (x, y))
+                self.field[x][y] = Conveyor(self, (x, y))
         self.chunks = [[Chunk(self, (x, y)) for y in range(self.ch_w)] for x in range(self.ch_h)]
         #
         self.add(Panel((0, 0, 100, 100)))
