@@ -15,6 +15,7 @@ class Conveyor(Block):
             [0, 1],
             [-1, 0]
         ]
+        self.is_conveyor = 1
 
     def set_item(self, item):
         if self.item == None:
@@ -30,7 +31,7 @@ class Conveyor(Block):
     def move_item(self):
         pos = [self.pos[0] + self.movelist[self.rotate][0], self.pos[1] + self.movelist[self.rotate][1]]
         if self.world.test_for_block_pos(pos):
-            if self.world.field[pos[0]][pos[1]].type == "conveyor" and self.world.field[pos[0]][pos[1]].rotate != (self.rotate + 2) % 4:
+            if self.world.field[pos[0]][pos[1]].is_conveyor and self.world.field[pos[0]][pos[1]].is_take_item(self.rotate):
                 item = self.item
                 if item != None:
                     if self.world.field[pos[0]][pos[1]].set_item(item):
@@ -43,17 +44,17 @@ class Conveyor(Block):
         c3 = 0
         pos1 = [self.pos[0] + self.movelist[(self.rotate - 1) % 4][0], self.pos[1] + self.movelist[(self.rotate - 1) % 4][1]]
         if self.world.test_for_block_pos(pos1):
-            if self.world.field[pos1[0]][pos1[1]].type == "conveyor" and self.world.field[pos1[0]][pos1[1]].rotate == (self.rotate + 1) % 4:
+            if self.world.field[pos1[0]][pos1[1]].is_connect_conveyor((self.rotate - 1) % 4):
                 c1 = 1
         #
         pos2 = [self.pos[0] + self.movelist[(self.rotate - 2) % 4][0], self.pos[1] + self.movelist[(self.rotate - 2) % 4][1]]
         if self.world.test_for_block_pos(pos2):
-            if self.world.field[pos2[0]][pos2[1]].type == "conveyor" and self.world.field[pos2[0]][pos2[1]].rotate == self.rotate:
+            if self.world.field[pos2[0]][pos2[1]].is_connect_conveyor((self.rotate - 2) % 4):
                 c2 = 1
         #
         pos3 = [self.pos[0] + self.movelist[(self.rotate + 1) % 4][0], self.pos[1] + self.movelist[(self.rotate + 1) % 4][1]]
         if self.world.test_for_block_pos(pos3):
-            if self.world.field[pos3[0]][pos3[1]].type == "conveyor" and self.world.field[pos3[0]][pos3[1]].rotate == (self.rotate - 1) % 4:
+            if self.world.field[pos3[0]][pos3[1]].is_connect_conveyor((self.rotate + 1) % 4):
                 c3 = 1
         #
         return(conveyors[self.rotate][c1 * 4 + c2 * 2 + c3])
@@ -62,3 +63,9 @@ class Conveyor(Block):
         Block.remove_block(self)
         if self.item != None:
             self.world.items.remove(self.item)
+
+    def is_connect_conveyor(self, rotate):
+        return(self.rotate == (rotate + 2) % 4)
+
+    def is_take_item(self, rotate):
+        return(self.rotate == rotate)

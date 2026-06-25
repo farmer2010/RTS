@@ -125,8 +125,14 @@ class World(Panel):
             ]
             if self.test_for_block_pos(blockpos):
                 if self.field[blockpos[0]][blockpos[1]].type == "air":
-                    self.field[blockpos[0]][blockpos[1]] = Conveyor(self, blockpos, rotate=self.set_rotate)
+                    if keys[pygame.K_KP0]:
+                        self.field[blockpos[0]][blockpos[1]] = Conveyor(self, blockpos, rotate=self.set_rotate)
+                    elif keys[pygame.K_KP1]:
+                        self.field[blockpos[0]][blockpos[1]] = Router(self, blockpos)
+                    else:
+                        self.field[blockpos[0]][blockpos[1]] = Stone(self, blockpos)
                     self.chunks[blockpos[0] // 16][blockpos[1] // 16].update_image()
+
         #
         if pygame.mouse.get_pressed()[2]:#ломание
             self.action_type = None
@@ -229,7 +235,7 @@ class World(Panel):
             if self.steps % 6 == 0:
                 for item in self.items:
                     bl = item[1]
-                    if bl.type == "conveyor":
+                    if bl.is_conveyor:
                         bl.move_item()
             self.steps += 1
         #
@@ -305,9 +311,10 @@ class World(Panel):
                     d += 1
         #
         for item in self.items:
-            pos = item[1].pos
-            img = pygame.transform.scale(items[item[0]], (16 * self.zoom, 16 * self.zoom))
-            screen.blit(img, self.game_to_display([pos[0] * 16, pos[1] * 16]))
+            if item[1].type == "conveyor":
+                pos = item[1].pos
+                img = pygame.transform.scale(items[item[0]], (16 * self.zoom, 16 * self.zoom))
+                screen.blit(img, self.game_to_display([pos[0] * 16, pos[1] * 16]))
             #screen.blit(pygame.transform.scale(dig_img, (16 * self.zoom, 16 * self.zoom)), self.game_to_display([item[1].pos[0] * 16, item[1].pos[1] * 16]))
         #
         for obj in self.objects:

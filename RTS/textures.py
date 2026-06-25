@@ -4,6 +4,7 @@ stone_img = pygame.image.load("files/images/stone.png")
 grass_img = pygame.image.load("files/images/grass.png")
 sand_img = pygame.image.load("files/images/sand.png")
 water_img = pygame.image.load("files/images/water.png")
+router_img = pygame.image.load("files/images/router.png")
 
 crack = [
     pygame.image.load("files/images/crack1.png"),

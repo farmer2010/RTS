@@ -15,6 +15,7 @@ class Block():
         self.speed = 1
         self.can_mined = 0
         self.health = 100
+        self.is_conveyor = 0
 
     def update(self, events):
         pass
@@ -31,3 +32,9 @@ class Block():
 
     def get_image(self):
         return(self.image)
+
+    def is_connect_conveyor(self, rotate):
+        return(False)
+
+    def is_take_item(self, rotate):
+        return(False)

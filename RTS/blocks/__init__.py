@@ -5,6 +5,7 @@ from blocks.sand import *
 from blocks.water import *
 from blocks.grass import *
 from blocks.conveyor import *
+from blocks.router import *
 
 def get_block(type):
     if type == "air":
