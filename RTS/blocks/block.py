@@ -36,5 +36,8 @@ class Block():
     def is_connect_conveyor(self, rotate):
         return(False)
 
-    def is_take_item(self, rotate):
+    def can_take_item(self, rotate):
         return(False)
+
+    def action(self):#нажатие на блок
+        pass

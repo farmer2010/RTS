@@ -32,8 +32,8 @@ class Router(Block):
         for i in range(4):
             pos = [self.pos[0] + self.movelist[self.index][0], self.pos[1] + self.movelist[self.index][1]]
             if self.world.test_for_block_pos(pos):
-                if self.world.field[pos[0]][pos[1]].is_conveyor and self.world.field[pos[0]][pos[1]].is_take_item(self.index):
-                    if item != None and item == self.item:
+                if self.world.field[pos[0]][pos[1]].is_conveyor and self.world.field[pos[0]][pos[1]].can_take_item(self.index):
+                    if item != None and item is self.item:
                         if self.world.field[pos[0]][pos[1]].set_item(item, i):
                             item[1] = self.world.field[pos[0]][pos[1]]
                             self.item = None
@@ -49,5 +49,5 @@ class Router(Block):
     def is_connect_conveyor(self, rotate):
         return(True)
 
-    def is_take_item(self, rotate):
+    def can_take_item(self, rotate):
         return(True)

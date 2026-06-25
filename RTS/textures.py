@@ -1,5 +1,11 @@
 import pygame
 
+'''
+цвета предметов:
+камень - #636363
+уголь - #1e1e1e
+'''
+
 stone_img = pygame.image.load("files/images/stone.png")
 grass_img = pygame.image.load("files/images/grass.png")
 sand_img = pygame.image.load("files/images/sand.png")
@@ -57,6 +63,15 @@ conveyors = [
         pygame.transform.rotate(pygame.image.load("files/images/conveyor7.png"), 90),
     ]
 ]
+
+sorter_images = {
+    "stone" : pygame.image.load("files/images/sorter_stone.png"),
+    "coal" : pygame.image.load("files/images/sorter_coal.png"),
+}
+inverted_sorter_images = {
+    "stone" : pygame.image.load("files/images/inverted_sorter_stone.png"),
+    "coal" : pygame.image.load("files/images/inverted_sorter_coal.png"),
+}
 
 items = {
     "stone" : pygame.image.load("files/images/item_stone.png"),

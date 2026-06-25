@@ -7,6 +7,8 @@ from blocks.grass import *
 from blocks.conveyor import *
 from blocks.router import *
 from blocks.junction import *
+from blocks.sorter import *
+from blocks.item_vacuum import *
 
 def get_block(type):
     if type == "air":

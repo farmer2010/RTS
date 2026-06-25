@@ -118,34 +118,6 @@ class World(Panel):
         if self.zoom_timer > 0:
             self.zoom_timer -= 1
         #
-        if pygame.mouse.get_pressed()[0] and not keys[pygame.K_LSHIFT]:#установка
-            blockpos = [
-                int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) // (16 * self.zoom)),
-                int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) // (16 * self.zoom))
-            ]
-            if self.test_for_block_pos(blockpos):
-                if self.field[blockpos[0]][blockpos[1]].type == "air":
-                    if keys[pygame.K_KP0]:
-                        self.field[blockpos[0]][blockpos[1]] = Conveyor(self, blockpos, rotate=self.set_rotate)
-                    elif keys[pygame.K_KP1]:
-                        self.field[blockpos[0]][blockpos[1]] = Router(self, blockpos)
-                    elif keys[pygame.K_KP2]:
-                        self.field[blockpos[0]][blockpos[1]] = Junction(self, blockpos)
-                    else:
-                        self.field[blockpos[0]][blockpos[1]] = Stone(self, blockpos)
-                    self.chunks[blockpos[0] // 16][blockpos[1] // 16].update_image()
-
-        #
-        if pygame.mouse.get_pressed()[2]:#ломание
-            self.action_type = None
-            blockpos = [
-                int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) // (16 * self.zoom)),
-                int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) // (16 * self.zoom))
-            ]
-            if self.test_for_block_pos(blockpos):
-                if self.field[blockpos[0]][blockpos[1]].type != "air":
-                    self.field[blockpos[0]][blockpos[1]].remove_block()
-        #
         for event in events:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_1:
@@ -218,7 +190,7 @@ class World(Panel):
                     self.action_func()
             #
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1 and keys[pygame.K_LSHIFT]:
+                if event.button == 1 and keys[pygame.K_LSHIFT]:#команда юнитам
                     for obj in self.objects:
                         if obj._class == "unit" and obj.player == self.player and obj in self.player.selected_units:
                             mousepos = pygame.mouse.get_pos()
@@ -228,6 +200,49 @@ class World(Panel):
                             ]
                             obj.move_command(pos)
                     self.command_index += 1
+                if event.button == 1 and not keys[pygame.K_LSHIFT]:#нажатие на блок
+                    blockpos = [
+                        int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) // (16 * self.zoom)),
+                        int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) // (16 * self.zoom))
+                    ]
+                    if self.test_for_block_pos(blockpos):
+                        if self.field[blockpos[0]][blockpos[1]].type != "air":
+                            self.field[blockpos[0]][blockpos[1]].action()
+                            self.chunks[blockpos[0] // 16][blockpos[1] // 16].update_image()
+        #
+        if pygame.mouse.get_pressed()[0] and not keys[pygame.K_LSHIFT]:#установка
+            blockpos = [
+                int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) // (16 * self.zoom)),
+                int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) // (16 * self.zoom))
+            ]
+            if self.test_for_block_pos(blockpos):
+                if self.field[blockpos[0]][blockpos[1]].type == "air":
+                    if keys[pygame.K_KP0]:
+                        self.field[blockpos[0]][blockpos[1]] = Conveyor(self, blockpos, rotate=self.set_rotate)
+                    elif keys[pygame.K_KP1]:
+                        self.field[blockpos[0]][blockpos[1]] = Router(self, blockpos)
+                    elif keys[pygame.K_KP2]:
+                        self.field[blockpos[0]][blockpos[1]] = Junction(self, blockpos)
+                    elif keys[pygame.K_KP3]:
+                        self.field[blockpos[0]][blockpos[1]] = Sorter(self, blockpos, "sorter")
+                    elif keys[pygame.K_KP4]:
+                        self.field[blockpos[0]][blockpos[1]] = Sorter(self, blockpos, "inverted sorter")
+                    elif keys[pygame.K_KP_DIVIDE]:
+                        self.field[blockpos[0]][blockpos[1]] = ItemVacuum(self, blockpos)
+                    else:
+                        self.field[blockpos[0]][blockpos[1]] = Stone(self, blockpos)
+                    self.chunks[blockpos[0] // 16][blockpos[1] // 16].update_image()
+
+        #
+        if pygame.mouse.get_pressed()[2]:#ломание
+            self.action_type = None
+            blockpos = [
+                int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) // (16 * self.zoom)),
+                int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) // (16 * self.zoom))
+            ]
+            if self.test_for_block_pos(blockpos):
+                if self.field[blockpos[0]][blockpos[1]].type != "air":
+                    self.field[blockpos[0]][blockpos[1]].remove_block()
         #
         #ОБНОВЛЕНИЕ
         #
