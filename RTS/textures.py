@@ -57,7 +57,8 @@ conveyors = [
 ]
 
 items = {
-    "stone" : pygame.image.load("files/images/item_stone.png")
+    "stone" : pygame.image.load("files/images/item_stone.png"),
+    "coal" : pygame.image.load("files/images/item_coal.png"),
 }
 
 dig_img = pygame.Surface((16, 16), pygame.SRCALPHA)

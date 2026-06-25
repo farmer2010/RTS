@@ -31,6 +31,7 @@ class World(Panel):
         self.command_index = 0
         self.set_rotate = 0
         self.steps = 0
+        self.phase = 0
         #
         self.draw_path = 0
         self.draw_command = 0
@@ -157,10 +158,19 @@ class World(Panel):
                     ]
                     if self.test_for_block_pos(blockpos):
                         if self.field[blockpos[0]][blockpos[1]].type == "conveyor":
-                            self.field[blockpos[0]][blockpos[1]].set_item("stone")
-                            self.items.append(blockpos)
+                            itm = [blockpos, "stone", self.field[blockpos[0]][blockpos[1]]]
+                            if self.field[blockpos[0]][blockpos[1]].set_item(itm):
+                                self.items.append(itm)
                 if event.key == pygame.K_5:
-                    pass
+                    blockpos = [
+                        int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) // (16 * self.zoom)),
+                        int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) // (16 * self.zoom))
+                    ]
+                    if self.test_for_block_pos(blockpos):
+                        if self.field[blockpos[0]][blockpos[1]].type == "conveyor":
+                            itm = [blockpos, "coal", self.field[blockpos[0]][blockpos[1]]]
+                            if self.field[blockpos[0]][blockpos[1]].set_item(itm):
+                                self.items.append(itm)
                 if event.key == pygame.K_6:
                     blockpos = [
                         int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) // (16 * self.zoom)),
@@ -168,8 +178,12 @@ class World(Panel):
                     ]
                     if self.test_for_block_pos(blockpos):
                         if self.field[blockpos[0]][blockpos[1]].type == "conveyor":
-                            self.field[blockpos[0]][blockpos[1]].set_item(None)
-                            self.items.append(blockpos)
+                            if self.field[blockpos[0]][blockpos[1]].item1 != None:
+                                self.items.remove(self.field[blockpos[0]][blockpos[1]].item1)
+                                self.field[blockpos[0]][blockpos[1]].item1 = None
+                            if self.field[blockpos[0]][blockpos[1]].item2 != None:
+                                self.items.remove(self.field[blockpos[0]][blockpos[1]].item2)
+                                self.field[blockpos[0]][blockpos[1]].item2 = None
                 if event.key == pygame.K_F1:
                     self.draw_path = not self.draw_path
                 if event.key == pygame.K_F2:
@@ -219,8 +233,11 @@ class World(Panel):
             for obj in self.objects:
                 obj.update(events)
             if self.steps % 6 == 0:
-                for pos in self.items:
-                    pass
+                for item in self.items:
+                    pos = item[0]
+                    if self.field[item[2].pos[0]][item[2].pos[1]].type == "conveyor":
+                        self.field[item[2].pos[0]][item[2].pos[1]].move_item()
+                self.phase = (self.phase + 1) % 2
             self.steps += 1
         #
         for x in range(self.ch_w):
@@ -294,10 +311,18 @@ class World(Panel):
                     self.chunks[x][y].draw(screen)
                     d += 1
         #
-        for pos in self.items:
-            if self.field[pos[0]][pos[1]].type == "conveyor" and self.field[pos[0]][pos[1]].get_item() != None:
-                img = pygame.transform.scale(items[self.field[pos[0]][pos[1]].get_item()], (16 * self.zoom, 16 * self.zoom))
-                screen.blit(img, self.game_to_display([pos[0] * 16, pos[1] * 16]))
+        for item in self.items:
+            pos = item[0]
+            '''if self.field[pos[0]][pos[1]].type == "conveyor":
+                if self.field[pos[0]][pos[1]].item1 != None:
+                    img = pygame.transform.scale(items[self.field[pos[0]][pos[1]].item1[1]], (16 * self.zoom, 16 * self.zoom))
+                    screen.blit(img, self.game_to_display([pos[0] * 16, pos[1] * 16]))
+                if self.field[pos[0]][pos[1]].item2 != None:
+                    img = pygame.transform.scale(items[self.field[pos[0]][pos[1]].item2[1]], (16 * self.zoom, 16 * self.zoom))
+                    screen.blit(img, self.game_to_display([pos[0] * 16, pos[1] * 16]))'''
+            img = pygame.transform.scale(items[item[1]], (16 * self.zoom, 16 * self.zoom))
+            screen.blit(img, self.game_to_display([pos[0] * 16, pos[1] * 16]))
+            screen.blit(pygame.transform.scale(dig_img, (16 * self.zoom, 16 * self.zoom)), self.game_to_display([item[2].pos[0] * 16, item[2].pos[1] * 16]))
         #
         for obj in self.objects:
             obj.draw(screen)
