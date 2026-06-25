@@ -67,4 +67,4 @@ class Conveyor(Block):
         return(self.rotate == (rotate + 2) % 4)
 
     def can_take_item(self, rotate):
-        return(self.rotate == rotate)
+        return(self.rotate == rotate or self.rotate == (rotate + 1) % 4 or self.rotate == (rotate - 1) % 4)

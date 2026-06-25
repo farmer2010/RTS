@@ -2,8 +2,8 @@ from blocks.block import Block
 from textures import *
 from random import randint as rand
 
-class Sorter(Block):
-    def __init__(self, world, pos, type="sorter"):
+class Gate(Block):
+    def __init__(self, world, pos, type="overflow gate"):
         Block.__init__(self, world, type, pos)
         self.item = None
         self.image = router_img
@@ -17,7 +17,6 @@ class Sorter(Block):
         self.is_conveyor = 1
         self.index = 0
         self.rotate = 0
-        self.config = "stone"
 
     def set_item(self, item, rotate):
         if self.item == None:
@@ -33,14 +32,15 @@ class Sorter(Block):
 
     def move_item(self, item):
         if item != None and item is self.item:
-            if (item[0] == self.config and self.type == "sorter") or (item[0] != self.config and self.type == "inverted sorter"):#передаем вперед
+            if self.type == "overflow gate":#передаем вперед
                 pos = [self.pos[0] + self.movelist[self.rotate][0], self.pos[1] + self.movelist[self.rotate][1]]  # вперед
                 if self.world.test_for_block_pos(pos):
                     if self.world.field[pos[0]][pos[1]].is_conveyor and self.world.field[pos[0]][pos[1]].can_take_item(self.rotate):
                         if self.world.field[pos[0]][pos[1]].set_item(item, self.rotate):
                             item[1] = self.world.field[pos[0]][pos[1]]
                             self.item = None
-            else:#передаем по бокам
+                            return
+                #
                 for i in range(2):
                     pos = [self.pos[0] + self.movelist[(self.rotate + self.index * 2 - 1) % 4][0], self.pos[1] + self.movelist[(self.rotate + self.index * 2 - 1) % 4][1]]  # по бокам
                     if self.world.test_for_block_pos(pos):
@@ -51,6 +51,26 @@ class Sorter(Block):
                                 self.index = (self.index + 1) % 2
                                 return
                     self.index = (self.index + 1) % 2
+            elif self.type == "underflow gate":
+                for i in range(2):
+                    pos = [self.pos[0] + self.movelist[(self.rotate + self.index * 2 - 1) % 4][0], self.pos[1] + self.movelist[(self.rotate + self.index * 2 - 1) % 4][1]]  # по бокам
+                    if self.world.test_for_block_pos(pos):
+                        if self.world.field[pos[0]][pos[1]].is_conveyor and self.world.field[pos[0]][pos[1]].can_take_item((self.rotate + self.index * 2 - 1) % 4):
+                            if self.world.field[pos[0]][pos[1]].set_item(item, (self.rotate + self.index * 2 - 1) % 4):
+                                item[1] = self.world.field[pos[0]][pos[1]]
+                                self.item = None
+                                self.index = (self.index + 1) % 2
+                                return
+                    self.index = (self.index + 1) % 2
+                #
+                pos = [self.pos[0] + self.movelist[self.rotate][0], self.pos[1] + self.movelist[self.rotate][1]]  # вперед
+                if self.world.test_for_block_pos(pos):
+                    if self.world.field[pos[0]][pos[1]].is_conveyor and self.world.field[pos[0]][pos[1]].can_take_item(
+                            self.rotate):
+                        if self.world.field[pos[0]][pos[1]].set_item(item, self.rotate):
+                            item[1] = self.world.field[pos[0]][pos[1]]
+                            self.item = None
+                            return
 
     def remove_block(self):
         Block.remove_block(self)
@@ -64,15 +84,7 @@ class Sorter(Block):
         return(True)
 
     def get_image(self):
-        if self.type == "sorter":
-            return(sorter_images[self.config])
-        elif self.type == "inverted sorter":
-            return (inverted_sorter_images[self.config])
-
-    def action(self):
-        if self.config == "stone":
-            self.config = "coal"
-        elif self.config == "coal":
-            self.config = ""
-        elif self.config == "":
-            self.config = "stone"
+        if self.type == "overflow gate":
+            return(overflow_gate_img)
+        elif self.type == "underflow gate":
+            return (underflow_gate_img)

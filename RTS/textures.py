@@ -12,6 +12,9 @@ sand_img = pygame.image.load("files/images/sand.png")
 water_img = pygame.image.load("files/images/water.png")
 router_img = pygame.image.load("files/images/router.png")
 junction_img = pygame.image.load("files/images/junction.png")
+overflow_gate_img = pygame.image.load("files/images/overflow_gate.png")
+underflow_gate_img = pygame.image.load("files/images/underflow_gate.png")
+
 
 crack = [
     pygame.image.load("files/images/crack1.png"),
@@ -65,15 +68,18 @@ conveyors = [
 ]
 
 sorter_images = {
+    "" : pygame.image.load("files/images/sorter_null.png"),#не выбран предмет
     "stone" : pygame.image.load("files/images/sorter_stone.png"),
     "coal" : pygame.image.load("files/images/sorter_coal.png"),
 }
 inverted_sorter_images = {
+    "" : pygame.image.load("files/images/inverted_sorter_null.png"),
     "stone" : pygame.image.load("files/images/inverted_sorter_stone.png"),
     "coal" : pygame.image.load("files/images/inverted_sorter_coal.png"),
 }
 
 items = {
+    "" : pygame.image.load("files/images/item_null.png"),
     "stone" : pygame.image.load("files/images/item_stone.png"),
     "coal" : pygame.image.load("files/images/item_coal.png"),
 }

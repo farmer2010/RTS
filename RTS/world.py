@@ -227,6 +227,10 @@ class World(Panel):
                         self.field[blockpos[0]][blockpos[1]] = Sorter(self, blockpos, "sorter")
                     elif keys[pygame.K_KP4]:
                         self.field[blockpos[0]][blockpos[1]] = Sorter(self, blockpos, "inverted sorter")
+                    elif keys[pygame.K_KP5]:
+                        self.field[blockpos[0]][blockpos[1]] = Gate(self, blockpos, "overflow gate")
+                    elif keys[pygame.K_KP6]:
+                        self.field[blockpos[0]][blockpos[1]] = Gate(self, blockpos, "underflow gate")
                     elif keys[pygame.K_KP_DIVIDE]:
                         self.field[blockpos[0]][blockpos[1]] = ItemVacuum(self, blockpos)
                     else:
@@ -333,6 +337,16 @@ class World(Panel):
                 img = pygame.transform.scale(items[item[0]], (16 * self.zoom, 16 * self.zoom))
                 screen.blit(img, self.game_to_display([pos[0] * 16, pos[1] * 16]))
             #screen.blit(pygame.transform.scale(dig_img, (16 * self.zoom, 16 * self.zoom)), self.game_to_display([item[1].pos[0] * 16, item[1].pos[1] * 16]))
+        #
+        blockpos = [
+            int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) // (16 * self.zoom)),
+            int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) // (16 * self.zoom))
+        ]
+        if self.test_for_block_pos(blockpos):
+            bl = self.field[blockpos[0]][blockpos[1]]
+            if bl.type == "sorter" or bl.type == "inverted sorter":
+                img = pygame.transform.scale(items[bl.config], (16 * self.zoom, 16 * self.zoom))
+                screen.blit(img, self.game_to_display([bl.pos[0] * 16, bl.pos[1] * 16 - 16]))
         #
         for obj in self.objects:
             obj.draw(screen)
