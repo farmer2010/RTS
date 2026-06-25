@@ -5,8 +5,7 @@ from random import randint as rand
 class Conveyor(Block):
     def __init__(self, world, pos, rotate=0):
         Block.__init__(self, world, "conveyor", pos)
-        self.item1 = None
-        self.item2 = None
+        self.item = None
         self.rotate = rotate
         self.image = conveyors[0][0]
         self.has_hitbox = False
@@ -18,58 +17,25 @@ class Conveyor(Block):
         ]
 
     def set_item(self, item):
-        if self.world.phase == 0:
-            if self.item1 != None:
-                return(0)
-            self.item1 = item
-        else:
-            if self.item2 != None:
-                return(0)
-            self.item2 = item
-        return(1)
-
-    def take_item(self, item):#для передачи предметов конвейерами
-        if self.world.phase == 0:
-            if self.item2 == None:
-                self.item2 = item
-                return(1)
-        else:
-            if self.item1 == None:
-                self.item1 = item
-                return(1)
+        if self.item == None:
+            self.item = item
+            return(1)
         return(0)
 
-    def get_item(self):
-        if self.world.phase == 0:
-            return(self.item1)
-        else:
-            return(self.item2)
-
     def clear_item(self):
-        if self.world.phase == 0:
-            self.item1 = None
-        else:
-            self.item2 = None
+        if self.item != None:
+            self.world.items.remove(self.item)
+        self.item = None
 
     def move_item(self):
         pos = [self.pos[0] + self.movelist[self.rotate][0], self.pos[1] + self.movelist[self.rotate][1]]
         if self.world.test_for_block_pos(pos):
             if self.world.field[pos[0]][pos[1]].type == "conveyor" and self.world.field[pos[0]][pos[1]].rotate != (self.rotate + 2) % 4:
-                item = self.get_item()
+                item = self.item
                 if item != None:
-                    if self.world.field[pos[0]][pos[1]].take_item(item):
-                        item[0] = pos
-                        item[2] = self.world.field[pos[0]][pos[1]]
-                        self.clear_item()
-                        return
-                else:
-                    pass
-        if self.world.phase == 0:
-            self.item2 = self.item1
-            self.item1 = None
-        else:
-            self.item1 = self.item2
-            self.item2 = None
+                    if self.world.field[pos[0]][pos[1]].set_item(item):
+                        item[1] = self.world.field[pos[0]][pos[1]]
+                        self.item = None
 
     def get_image(self):
         c1 = 0
@@ -94,7 +60,5 @@ class Conveyor(Block):
 
     def remove_block(self):
         Block.remove_block(self)
-        if self.item1 != None:
-            self.world.items.remove(self.item1)
-        if self.item2 != None:
-            self.world.items.remove(self.item2)
+        if self.item != None:
+            self.world.items.remove(self.item)
