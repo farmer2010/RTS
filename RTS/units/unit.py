@@ -242,8 +242,8 @@ class Unit(Entity):
                         self.player.fog_units[npos[0]][npos[1]].remove(self)
                         if len(self.player.fog_units[npos[0]][npos[1]]) == 0:
                             self.player.fog[npos[0]][npos[1]] = 1
-                            self.world.chunks[int(npos[0] // 16)][int(npos[1] // 16)].fog_blocks[npos[0] % 16][npos[1] % 16].blit(self.world.ground_field[npos[0]][npos[1]].image)
-                            self.world.chunks[int(npos[0] // 16)][int(npos[1] // 16)].fog_blocks[npos[0] % 16][npos[1] % 16].blit(self.world.field[npos[0]][npos[1]].image)
+                            self.world.chunks[int(npos[0] // 16)][int(npos[1] // 16)].fog_blocks[npos[0] % 16][npos[1] % 16].blit(self.world.ground_field[npos[0]][npos[1]].get_image())
+                            self.world.chunks[int(npos[0] // 16)][int(npos[1] // 16)].fog_blocks[npos[0] % 16][npos[1] % 16].blit(self.world.field[npos[0]][npos[1]].get_image())
             #
             for p in self.fog_presets[rotate][0]:
                 npos = [new_pos[0] + p[0], new_pos[1] + p[1]]

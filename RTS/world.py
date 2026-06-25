@@ -29,6 +29,8 @@ class World(Panel):
         self.zoom_speed = 0
         self.pause = 0
         self.command_index = 0
+        self.set_rotate = 0
+        self.steps = 0
         #
         self.draw_path = 0
         self.draw_command = 0
@@ -39,6 +41,7 @@ class World(Panel):
         self.objects = []
         self.players = [UserPlayer(self), AiPlayer(self)]
         self.player = self.players[0]#игрок - пользователь
+        self.items = []
         #
         self.action_type = None
         self.action_pos = [0, 0]
@@ -60,7 +63,7 @@ class World(Panel):
                     self.ground_field[x][y] = Sand(self, (x, y))
                 else:
                     self.field[x][y] = Water(self, (x, y))
-                self.field[x][y] = Conveyor(self, (x, y))
+                #self.field[x][y] = Conveyor(self, (x, y))
         self.chunks = [[Chunk(self, (x, y)) for y in range(self.ch_w)] for x in range(self.ch_h)]
         #
         self.add(Panel((0, 0, 100, 100)))
@@ -122,7 +125,7 @@ class World(Panel):
             ]
             if self.test_for_block_pos(blockpos):
                 if self.field[blockpos[0]][blockpos[1]].type == "air":
-                    self.field[blockpos[0]][blockpos[1]] = Stone(self, blockpos)
+                    self.field[blockpos[0]][blockpos[1]] = Conveyor(self, blockpos, rotate=self.set_rotate)
                     self.chunks[blockpos[0] // 16][blockpos[1] // 16].update_image()
         #
         if pygame.mouse.get_pressed()[2]:#ломание
@@ -147,6 +150,26 @@ class World(Panel):
                             pos = self.display_to_game(mousepos)
                             if pos[0] > obj.pos[0] - obj.w/2 and pos[0] < obj.pos[0] + obj.w/2 and pos[1] > obj.pos[1] - obj.h/2 and pos[1] < obj.pos[1] + obj.h/2:
                                 obj.kill()
+                if event.key == pygame.K_4:
+                    blockpos = [
+                        int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) // (16 * self.zoom)),
+                        int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) // (16 * self.zoom))
+                    ]
+                    if self.test_for_block_pos(blockpos):
+                        if self.field[blockpos[0]][blockpos[1]].type == "conveyor":
+                            self.field[blockpos[0]][blockpos[1]].set_item("stone")
+                            self.items.append(blockpos)
+                if event.key == pygame.K_5:
+                    pass
+                if event.key == pygame.K_6:
+                    blockpos = [
+                        int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) // (16 * self.zoom)),
+                        int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) // (16 * self.zoom))
+                    ]
+                    if self.test_for_block_pos(blockpos):
+                        if self.field[blockpos[0]][blockpos[1]].type == "conveyor":
+                            self.field[blockpos[0]][blockpos[1]].set_item(None)
+                            self.items.append(blockpos)
                 if event.key == pygame.K_F1:
                     self.draw_path = not self.draw_path
                 if event.key == pygame.K_F2:
@@ -167,6 +190,8 @@ class World(Panel):
                     if event.key == pygame.K_c:
                         self.action_pos = self.display_to_game(mousepos)
                         self.action_type = "clear"
+                if event.key == pygame.K_r:
+                    self.set_rotate = (self.set_rotate + 1) % 4
             #
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_f and self.action_type == "units":
@@ -193,6 +218,10 @@ class World(Panel):
         if not self.pause:
             for obj in self.objects:
                 obj.update(events)
+            if self.steps % 6 == 0:
+                for pos in self.items:
+                    pass
+            self.steps += 1
         #
         for x in range(self.ch_w):
             for y in range(self.ch_h):
@@ -264,6 +293,11 @@ class World(Panel):
                 if x >= 0 and x < self.ch_w and y >= 0 and y < self.ch_h:
                     self.chunks[x][y].draw(screen)
                     d += 1
+        #
+        for pos in self.items:
+            if self.field[pos[0]][pos[1]].type == "conveyor" and self.field[pos[0]][pos[1]].get_item() != None:
+                img = pygame.transform.scale(items[self.field[pos[0]][pos[1]].get_item()], (16 * self.zoom, 16 * self.zoom))
+                screen.blit(img, self.game_to_display([pos[0] * 16, pos[1] * 16]))
         #
         for obj in self.objects:
             obj.draw(screen)

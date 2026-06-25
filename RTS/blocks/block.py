@@ -28,3 +28,6 @@ class Block():
     def draw(self, screen):
         pos = self.world.game_to_display([self.pos[0] * 16, self.pos[1] * 16])
         screen.blit(self.image, pos)
+
+    def get_image(self):
+        return(self.image)

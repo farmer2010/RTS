@@ -54,8 +54,8 @@ class Chunk():
     def draw_block_image(self, pos):
         img = pygame.Surface((16, 16))
         if self.world.field[pos[0]][pos[1]].type == "air":
-            img.blit(self.world.ground_field[pos[0]][pos[1]].image, (0, 0))
-        img.blit(self.world.field[pos[0]][pos[1]].image, (0, 0))
+            img.blit(self.world.ground_field[pos[0]][pos[1]].get_image(), (0, 0))
+        img.blit(self.world.field[pos[0]][pos[1]].get_image(), (0, 0))
         pr = int((1000 - self.world.field[pos[0]][pos[1]].progress) // 170)
         if pr > 0:
             img.blit(crack[pr - 1], (0, 0))
