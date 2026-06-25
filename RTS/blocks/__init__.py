@@ -6,6 +6,7 @@ from blocks.water import *
 from blocks.grass import *
 from blocks.conveyor import *
 from blocks.router import *
+from blocks.junction import *
 
 def get_block(type):
     if type == "air":

@@ -129,6 +129,8 @@ class World(Panel):
                         self.field[blockpos[0]][blockpos[1]] = Conveyor(self, blockpos, rotate=self.set_rotate)
                     elif keys[pygame.K_KP1]:
                         self.field[blockpos[0]][blockpos[1]] = Router(self, blockpos)
+                    elif keys[pygame.K_KP2]:
+                        self.field[blockpos[0]][blockpos[1]] = Junction(self, blockpos)
                     else:
                         self.field[blockpos[0]][blockpos[1]] = Stone(self, blockpos)
                     self.chunks[blockpos[0] // 16][blockpos[1] // 16].update_image()
@@ -164,7 +166,7 @@ class World(Panel):
                     if self.test_for_block_pos(blockpos):
                         if self.field[blockpos[0]][blockpos[1]].type == "conveyor":
                             itm = ["stone", self.field[blockpos[0]][blockpos[1]]]
-                            if self.field[blockpos[0]][blockpos[1]].set_item(itm):
+                            if self.field[blockpos[0]][blockpos[1]].set_item(itm, 0):
                                 self.items.append(itm)
                 if event.key == pygame.K_5:
                     blockpos = [
@@ -174,7 +176,7 @@ class World(Panel):
                     if self.test_for_block_pos(blockpos):
                         if self.field[blockpos[0]][blockpos[1]].type == "conveyor":
                             itm = ["coal", self.field[blockpos[0]][blockpos[1]]]
-                            if self.field[blockpos[0]][blockpos[1]].set_item(itm):
+                            if self.field[blockpos[0]][blockpos[1]].set_item(itm, 0):
                                 self.items.append(itm)
                 if event.key == pygame.K_6:
                     blockpos = [
@@ -236,7 +238,7 @@ class World(Panel):
                 for item in self.items:
                     bl = item[1]
                     if bl.is_conveyor:
-                        bl.move_item()
+                        bl.move_item(item)
             self.steps += 1
         #
         for x in range(self.ch_w):
