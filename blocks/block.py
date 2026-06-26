@@ -19,6 +19,7 @@ class Block():
         self.max_health = health
         self.is_conveyor = 0
         self.is_construction = 0
+        self.killed = 0
 
     def update(self, events):
         pass
@@ -28,6 +29,11 @@ class Block():
         self.world.chunks[int(self.pos[0] // 16)][int(self.pos[1] // 16)].image_changes = 1
         self.world.player.task_units[self.pos[0]][self.pos[1]] = None
         self.world.player.task_field[self.pos[0]][self.pos[1]] = 0
+        self.killed = 1
+
+    def kill(self):
+        self.remove_block()
+        self.killed = 1
 
     def draw(self, screen):
         pos = self.world.game_to_display([self.pos[0] * 16, self.pos[1] * 16])

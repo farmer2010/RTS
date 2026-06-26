@@ -29,7 +29,7 @@ class Projectile(Entity):
             self.pos[0] += dx
             self.pos[1] += dy
         else:
-            if collide[1] != None and collide[1]._class == "unit":
+            if collide[1] != None and (collide[1]._class == "unit" or (collide[1]._class == "block" and collide[1].is_construction)):
                 collide[1].health -= self.damage
                 if collide[1].health <= 0:
                     collide[1].kill()

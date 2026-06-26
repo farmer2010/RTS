@@ -356,7 +356,7 @@ class World(Panel):
                     img = pygame.transform.scale(items[bl.config], (16 * self.zoom, 16 * self.zoom))
                     screen.blit(img, self.game_to_display([bl.pos[0] * 16, bl.pos[1] * 16 - 16]))
                 if bl.is_construction:
-                    img = pygame.transform.scale(hbbar[10 - int(bl.health / bl.max_health * 10)], (16 * self.zoom, 16 * self.zoom))
+                    img = pygame.transform.scale(hbbar[int(10 - bl.health / bl.max_health * 10)], (16 * self.zoom, 16 * self.zoom))
                     screen.blit(img, self.game_to_display([bl.pos[0] * 16, bl.pos[1] * 16 + 16]))
         #
         for obj in self.objects:
