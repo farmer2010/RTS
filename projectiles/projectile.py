@@ -29,10 +29,11 @@ class Projectile(Entity):
             self.pos[0] += dx
             self.pos[1] += dy
         else:
-            if collide[1] != None and (collide[1]._class == "unit" or (collide[1]._class == "block" and collide[1].is_construction)):
+            if collide[1] != None and collide[1].player != self.player and (collide[1]._class == "unit" or (collide[1]._class == "block" and collide[1].is_construction)):
                 collide[1].health -= self.damage
                 if collide[1].health <= 0:
                     collide[1].kill()
+                    print(collide[1].type, collide[1].max_health)
             self.kill()
 
     def collide(self, spx=0, spy=0):
@@ -51,7 +52,7 @@ class Projectile(Entity):
         for x in range(int(centpos[0] - count[0] / 2), int(centpos[0] + count[0] / 2) + 1, 1):
             for y in range(int(centpos[1] - count[1] / 2), int(centpos[1] + count[1] / 2) + 1, 1):
                 if self.world.test_for_block_pos((x, y)):
-                    if self.world.field[x][y].has_hitbox and self.collide_block(x * 16, y * 16):
+                    if self.world.field[x][y].has_hitbox and self.collide_block(x * 16, y * 16) and self.world.field[x][y].player != self.player:
                         return(1, self.world.field[x][y])
         #
         for obj in self.world.objects:#с другими юнитами

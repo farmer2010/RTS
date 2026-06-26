@@ -1,6 +1,6 @@
 from units.unit import *
 
-class TurretUnit(Unit):
+class TurretUnit(Unit):#пушка турели
     def __init__(self, world, player, pos, type, scale=16, radius=15):
         Unit.__init__(self, world, player, "turret unit", pos, scale, scale, fog_radius=radius, speed=0, health=400)
         self._class = "turret unit"
@@ -63,7 +63,12 @@ class TurretUnit(Unit):
             self.reload_timer -= 1
 
     def draw(self, screen):
+        if self.target != None:
+            if self.target._class == "unit":
+                self.rotate = math.atan2(self.target.pos[1] - self.pos[1], self.target.pos[0] - self.pos[0])
+            elif self.target._class == "block":
+                self.rotate = math.atan2(self.target.pos[1] * 16 + 8 - self.pos[1], self.target.pos[0] * 16 + 8 - self.pos[0])
         img = pygame.transform.scale(self.image, (self.w * self.world.zoom, self.h * self.world.zoom))
-        img = pygame.transform.rotate(img, self.rotate * 57.296)
+        img = pygame.transform.rotate(img, 270 - self.rotate * 57.296)
         pos = self.world.game_to_display(self.pos)
         screen.blit(img, [pos[0] - img.get_width() / 2, pos[1] - img.get_height() / 2])
