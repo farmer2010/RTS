@@ -410,13 +410,14 @@ class World(Panel):
             #
             pygame.draw.rect(screen, (90, 90, 90), (self.display_W - self.w - 4, 0, self.w + 4, self.h + 4))
             screen.blit(self.minimap, (self.display_W - self.w - 2, 2))
-            pos1 = [self.display_W-2+int((self.cam_pos[0] - self.display_W / self.zoom / 2) // 16), self.display_H-2+int((self.cam_pos[1] - self.display_H / self.zoom / 2) // 16)]#левый верхний
-            pos2 = [self.display_W-2+int((self.cam_pos[0] + self.display_W / self.zoom / 2) // 16), self.display_H-2+int((self.cam_pos[1] - self.display_H / self.zoom / 2) // 16)]#правый верхний
-            pos3 = [self.display_W-2+int((self.cam_pos[0] - self.display_W / self.zoom / 2) // 16), self.display_H-2+int((self.cam_pos[1] + self.display_H / self.zoom / 2) // 16)]#левый нижний
-            pos4 = [self.display_W-2+int((self.cam_pos[0] + self.display_W / self.zoom / 2) // 16), self.display_H-2+int((self.cam_pos[1] + self.display_H / self.zoom / 2) // 16)]#правый нижний
-            print(pos1)
-            pos5 = [self.cam_pos[0]]
-            pygame.draw.rect(screen, (255, 190, 0), (pos5[0], pos5[1], 2, 2))
+            pos1 = [max((self.cam_pos[0] - W / self.zoom / 2) // 16, 0), min((self.cam_pos[1] - H / self.zoom / 2) // 16, self.h)]#левый верхний
+            pos2 = [max((self.cam_pos[0] + W / self.zoom / 2) // 16, 0), min((self.cam_pos[1] - H / self.zoom / 2) // 16, self.h)]#правый верхний
+            pos3 = [max((self.cam_pos[0] - W / self.zoom / 2) // 16, 0), min((self.cam_pos[1] + H / self.zoom / 2) // 16, self.h)]#левый нижний
+            pos4 = [max((self.cam_pos[0] + W / self.zoom / 2) // 16, 0), min((self.cam_pos[1] + H / self.zoom / 2) // 16, self.h)]#правый нижний
+            pygame.draw.rect(screen, (255, 190, 0), (W - self.w - 4 + pos1[0], pos1[1], pos2[0] - pos1[0], 2))
+            pygame.draw.rect(screen, (255, 190, 0), (W - self.w - 4 + pos3[0], pos3[1], pos4[0] - pos3[0], 2))
+            pygame.draw.rect(screen, (255, 190, 0), (W - self.w - 4 + pos1[0], pos1[1], 2, pos3[1] - pos1[1]))
+            pygame.draw.rect(screen, (255, 190, 0), (W - self.w - 4 + pos2[0], pos2[1], 2, pos4[1] - pos2[1] + 2))
             #
             utils.render_text(str(self.zoom), (0, 25), screen, color=(255, 0, 0))
             utils.render_text(str(d), (0, 50), screen, color=(255, 0, 0))
