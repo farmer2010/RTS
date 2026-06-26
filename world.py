@@ -12,7 +12,7 @@ W = pygame.display.Info().current_w
 H = pygame.display.Info().current_h
 
 class World(Panel):
-    def __init__(self, w=5, h=5):
+    def __init__(self, w=8, h=8):
         Panel.__init__(self, (0, 0, W, H))
         self.ch_w = w
         self.ch_h = h
@@ -31,6 +31,7 @@ class World(Panel):
         self.command_index = 0
         self.set_rotate = 0
         self.steps = 0
+        self.menu = "game"
         #
         self.draw_path = 0
         self.draw_command = 0
@@ -47,6 +48,8 @@ class World(Panel):
         self.action_type = None
         self.action_pos = [0, 0]
         #
+        self.minimap = pygame.Surface((self.w, self.h), pygame.SRCALPHA)
+        self.minimap.fill((0, 0, 0))
         self.field = [[Air(self, (x, y)) for y in range(self.h)] for x in range(self.w)]
         self.ground_field = [[Air(self, (x, y)) for y in range(self.h)] for x in range(self.w)]
         self.unit_field = [[[] for y in range(self.w)] for x in range(self.h)]
@@ -57,6 +60,7 @@ class World(Panel):
                 self.ground_field[x][y] = Grass(self, (x, y))
                 if f > 0.5:
                     self.field[x][y] = Stone(self, (x, y))
+                    self.ground_field[x][y] = StoneFloor(self, (x, y))
                 elif f > -0.1:
                     self.field[x][y] = Air(self, (x, y))
                 elif f > -0.25:
@@ -64,223 +68,225 @@ class World(Panel):
                     self.ground_field[x][y] = Sand(self, (x, y))
                 else:
                     self.field[x][y] = Water(self, (x, y))
-                #self.field[x][y] = Conveyor(self, (x, y))
         self.chunks = [[Chunk(self, (x, y)) for y in range(self.ch_w)] for x in range(self.ch_h)]
-        #
-        self.add(Panel((0, 0, 100, 100)))
 
     def update(self, events):
         keys = pygame.key.get_pressed()
         mousepos = pygame.mouse.get_pos()
-        #
-        #УПРАВЛЕНИЕ
-        #
-        move_keys = [#перемещение камеры
-            keys[pygame.K_w],
-            keys[pygame.K_d],
-            keys[pygame.K_s],
-            keys[pygame.K_a]
-        ]
-        if sum(move_keys) > 0:
-            if move_keys[1] + move_keys[3] == 0:
-                if move_keys[0]:
-                    self.cam_pos[1] -= self.cam_speed
-                elif move_keys[2]:
-                    self.cam_pos[1] += self.cam_speed
-            elif move_keys[0] + move_keys[2] == 0:
-                if move_keys[3]:
-                    self.cam_pos[0] -= self.cam_speed
-                elif move_keys[1]:
-                    self.cam_pos[0] += self.cam_speed
-            else:
-                if move_keys[0]:
-                    if move_keys[3]:
-                        self.cam_pos[0] -= self.cam_speed / 1.4
-                        self.cam_pos[1] -= self.cam_speed / 1.4
-                    elif move_keys[1]:
-                        self.cam_pos[0] += self.cam_speed / 1.4
-                        self.cam_pos[1] -= self.cam_speed / 1.4
-                elif move_keys[2]:
-                    if move_keys[3]:
-                        self.cam_pos[0] -= self.cam_speed / 1.4
-                        self.cam_pos[1] += self.cam_speed / 1.4
-                    elif move_keys[1]:
-                        self.cam_pos[0] += self.cam_speed / 1.4
-                        self.cam_pos[1] += self.cam_speed / 1.4
-        #
-        if self.zoom_timer == 0:#зум
-            self.zoom = round(self.zoom)
-            self.zoom_speed = 0
-            wheel = self.input_manager.get_mousewheel()
-            if wheel != 0:
-                self.zoom_timer = 20
-                self.zoom_speed = (max(min(self.zoom + wheel, self.max_zoom), self.min_zoom) - self.zoom) / 20
-        self.zoom += self.zoom_speed
-        if self.zoom_timer > 0:
-            self.zoom_timer -= 1
-        #
-        for event in events:
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_1:
-                    self.objects.append(Tank(self, self.players[self.pl_ind], self.display_to_game(mousepos)))
-                if event.key == pygame.K_2:
-                    self.objects.append(Worker(self, self.players[self.pl_ind], self.display_to_game(mousepos)))
-                if event.key == pygame.K_3:
-                    for obj in self.objects:
-                        if obj._class == "unit":
-                            pos = self.display_to_game(mousepos)
-                            if pos[0] > obj.pos[0] - obj.w/2 and pos[0] < obj.pos[0] + obj.w/2 and pos[1] > obj.pos[1] - obj.h/2 and pos[1] < obj.pos[1] + obj.h/2:
-                                obj.kill()
-                if event.key == pygame.K_4:
-                    blockpos = [
-                        int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) // (16 * self.zoom)),
-                        int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) // (16 * self.zoom))
-                    ]
-                    if self.test_for_block_pos(blockpos):
-                        if self.field[blockpos[0]][blockpos[1]].type == "conveyor":
-                            itm = ["stone", self.field[blockpos[0]][blockpos[1]]]
-                            if self.field[blockpos[0]][blockpos[1]].set_item(itm, 0):
-                                self.items.append(itm)
-                if event.key == pygame.K_5:
-                    blockpos = [
-                        int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) // (16 * self.zoom)),
-                        int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) // (16 * self.zoom))
-                    ]
-                    if self.test_for_block_pos(blockpos):
-                        if self.field[blockpos[0]][blockpos[1]].type == "conveyor":
-                            itm = ["coal", self.field[blockpos[0]][blockpos[1]]]
-                            if self.field[blockpos[0]][blockpos[1]].set_item(itm, 0):
-                                self.items.append(itm)
-                if event.key == pygame.K_6:
-                    blockpos = [
-                        int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) // (16 * self.zoom)),
-                        int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) // (16 * self.zoom))
-                    ]
-                    if self.test_for_block_pos(blockpos):
-                        if self.field[blockpos[0]][blockpos[1]].type == "conveyor":
-                            self.field[blockpos[0]][blockpos[1]].clear_item()
-                if event.key == pygame.K_7:
-                    self.pl_ind = (self.pl_ind + 1) % 2
-                if event.key == pygame.K_F1:
-                    self.draw_path = not self.draw_path
-                if event.key == pygame.K_F2:
-                    self.draw_command = not self.draw_command
-                if event.key == pygame.K_F3:
-                    self.draw_path_index = not self.draw_path_index
-                if event.key == pygame.K_F4:
-                    self.draw_pos = not self.draw_pos
-                if event.key == pygame.K_ESCAPE:
-                    self.pause = not self.pause
-                if self.action_type == None:
-                    if event.key == pygame.K_f:
-                        self.action_pos = self.display_to_game(mousepos)
-                        self.action_type = "units"
-                    if event.key == pygame.K_g:
-                        self.action_pos = self.display_to_game(mousepos)
-                        self.action_type = "dig"
-                    if event.key == pygame.K_c:
-                        self.action_pos = self.display_to_game(mousepos)
-                        self.action_type = "clear"
-                if event.key == pygame.K_r:
-                    self.set_rotate = (self.set_rotate + 1) % 4
+        if self.menu == "game":
             #
-            if event.type == pygame.KEYUP:
-                if event.key == pygame.K_f and self.action_type == "units":
-                    self.action_func()
-                if event.key == pygame.K_g and self.action_type == "dig":
-                    self.action_func()
-                if event.key == pygame.K_c and self.action_type == "clear":
-                    self.action_func()
+            #УПРАВЛЕНИЕ
             #
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1 and keys[pygame.K_LSHIFT]:#команда юнитам
-                    for obj in self.objects:
-                        if obj._class == "unit" and obj.player == self.player and obj in self.player.selected_units:
-                            mousepos = pygame.mouse.get_pos()
-                            pos = [
-                                int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) / self.zoom / 16),
-                                int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) / self.zoom / 16)
-                            ]
-                            obj.move_command(pos)
-                    self.command_index += 1
-                if event.button == 1 and not keys[pygame.K_LSHIFT]:#нажатие на блок
-                    blockpos = [
-                        int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) // (16 * self.zoom)),
-                        int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) // (16 * self.zoom))
-                    ]
-                    if self.test_for_block_pos(blockpos):
-                        if self.field[blockpos[0]][blockpos[1]].type != "air":
-                            self.field[blockpos[0]][blockpos[1]].action()
-                            self.chunks[blockpos[0] // 16][blockpos[1] // 16].update_image()
-        #
-        if pygame.mouse.get_pressed()[0] and not keys[pygame.K_LSHIFT]:#установка
-            blockpos = [
-                int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) // (16 * self.zoom)),
-                int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) // (16 * self.zoom))
+            move_keys = [#перемещение камеры
+                keys[pygame.K_w],
+                keys[pygame.K_d],
+                keys[pygame.K_s],
+                keys[pygame.K_a]
             ]
-            if self.test_for_block_pos(blockpos):
-                if self.field[blockpos[0]][blockpos[1]].type == "air":
-                    if keys[pygame.K_KP0]:
-                        self.field[blockpos[0]][blockpos[1]] = Conveyor(self, blockpos, self.players[self.pl_ind], rotate=self.set_rotate)
-                    elif keys[pygame.K_KP1]:
-                        self.field[blockpos[0]][blockpos[1]] = Router(self, blockpos, self.players[self.pl_ind])
-                    elif keys[pygame.K_KP2]:
-                        self.field[blockpos[0]][blockpos[1]] = Junction(self, blockpos, self.players[self.pl_ind])
-                    elif keys[pygame.K_KP3]:
-                        self.field[blockpos[0]][blockpos[1]] = Sorter(self, blockpos, self.players[self.pl_ind], "sorter")
-                    elif keys[pygame.K_KP4]:
-                        self.field[blockpos[0]][blockpos[1]] = Sorter(self, blockpos, self.players[self.pl_ind], "inverted sorter")
-                    elif keys[pygame.K_KP5]:
-                        self.field[blockpos[0]][blockpos[1]] = Gate(self, blockpos, self.players[self.pl_ind], "overflow gate")
-                    elif keys[pygame.K_KP6]:
-                        self.field[blockpos[0]][blockpos[1]] = Gate(self, blockpos, self.players[self.pl_ind], "underflow gate")
-                    elif keys[pygame.K_KP7]:
-                        self.field[blockpos[0]][blockpos[1]] = Wall(self, blockpos, self.players[self.pl_ind], "stone wall")
-                    elif keys[pygame.K_KP8]:
-                        self.field[blockpos[0]][blockpos[1]] = Wall(self, blockpos, self.players[self.pl_ind], "iron wall")
-                    elif keys[pygame.K_KP9]:
-                        self.field[blockpos[0]][blockpos[1]] = SmallTurret(self, blockpos, self.players[self.pl_ind], "stone turret")
-                    elif keys[pygame.K_KP_DIVIDE]:
-                        self.field[blockpos[0]][blockpos[1]] = ItemVacuum(self, blockpos)
-                    else:
-                        self.field[blockpos[0]][blockpos[1]] = Stone(self, blockpos)
-                    self.chunks[blockpos[0] // 16][blockpos[1] // 16].update_image()
-
-        #
-        if pygame.mouse.get_pressed()[2]:#ломание
-            self.action_type = None
-            blockpos = [
-                int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) // (16 * self.zoom)),
-                int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) // (16 * self.zoom))
-            ]
-            if self.test_for_block_pos(blockpos):
-                if self.field[blockpos[0]][blockpos[1]].type != "air":
-                    self.field[blockpos[0]][blockpos[1]].remove_block()
-        #
-        #ОБНОВЛЕНИЕ
-        #
-        if not self.pause:
-            for obj in self.objects:
-                obj.update(events)
-            if self.steps % 6 == 0:
-                for item in self.items:
-                    bl = item[1]
-                    if bl.is_conveyor:
-                        bl.move_item(item)
-            self.steps += 1
-        #
-        for x in range(self.ch_w):
-            for y in range(self.ch_h):
-                if self.chunks[x][y].image_changes:
-                    self.chunks[x][y].update_image()
-                    self.chunks[x][y].image_changes = False
-        #
-        for x in range(self.ch_w):
-            for y in range(self.ch_h):
-                if self.chunks[x][y].fog_changes:
-                    self.chunks[x][y].update_fog_image()
-                    self.chunks[x][y].fog_changes = False
-        #
+            if sum(move_keys) > 0:
+                if move_keys[1] + move_keys[3] == 0:
+                    if move_keys[0]:
+                        self.cam_pos[1] -= self.cam_speed
+                    elif move_keys[2]:
+                        self.cam_pos[1] += self.cam_speed
+                elif move_keys[0] + move_keys[2] == 0:
+                    if move_keys[3]:
+                        self.cam_pos[0] -= self.cam_speed
+                    elif move_keys[1]:
+                        self.cam_pos[0] += self.cam_speed
+                else:
+                    if move_keys[0]:
+                        if move_keys[3]:
+                            self.cam_pos[0] -= self.cam_speed / 1.4
+                            self.cam_pos[1] -= self.cam_speed / 1.4
+                        elif move_keys[1]:
+                            self.cam_pos[0] += self.cam_speed / 1.4
+                            self.cam_pos[1] -= self.cam_speed / 1.4
+                    elif move_keys[2]:
+                        if move_keys[3]:
+                            self.cam_pos[0] -= self.cam_speed / 1.4
+                            self.cam_pos[1] += self.cam_speed / 1.4
+                        elif move_keys[1]:
+                            self.cam_pos[0] += self.cam_speed / 1.4
+                            self.cam_pos[1] += self.cam_speed / 1.4
+            #
+            if self.zoom_timer == 0:#зум
+                self.zoom = round(self.zoom)
+                self.zoom_speed = 0
+                wheel = self.input_manager.get_mousewheel()
+                if wheel != 0:
+                    self.zoom_timer = 20
+                    self.zoom_speed = (max(min(self.zoom + wheel, self.max_zoom), self.min_zoom) - self.zoom) / 20
+            self.zoom += self.zoom_speed
+            if self.zoom_timer > 0:
+                self.zoom_timer -= 1
+            #
+            for event in events:
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_1:
+                        self.objects.append(Tank(self, self.players[self.pl_ind], self.display_to_game(mousepos)))
+                    if event.key == pygame.K_2:
+                        self.objects.append(Worker(self, self.players[self.pl_ind], self.display_to_game(mousepos)))
+                    if event.key == pygame.K_3:
+                        for obj in self.objects:
+                            if obj._class == "unit":
+                                pos = self.display_to_game(mousepos)
+                                if pos[0] > obj.pos[0] - obj.w/2 and pos[0] < obj.pos[0] + obj.w/2 and pos[1] > obj.pos[1] - obj.h/2 and pos[1] < obj.pos[1] + obj.h/2:
+                                    obj.kill()
+                    if event.key == pygame.K_4:
+                        blockpos = [
+                            int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) // (16 * self.zoom)),
+                            int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) // (16 * self.zoom))
+                        ]
+                        if self.test_for_block_pos(blockpos):
+                            if self.field[blockpos[0]][blockpos[1]].type == "conveyor":
+                                itm = ["stone", self.field[blockpos[0]][blockpos[1]]]
+                                if self.field[blockpos[0]][blockpos[1]].set_item(itm, 0):
+                                    self.items.append(itm)
+                    if event.key == pygame.K_5:
+                        blockpos = [
+                            int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) // (16 * self.zoom)),
+                            int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) // (16 * self.zoom))
+                        ]
+                        if self.test_for_block_pos(blockpos):
+                            if self.field[blockpos[0]][blockpos[1]].type == "conveyor":
+                                itm = ["coal", self.field[blockpos[0]][blockpos[1]]]
+                                if self.field[blockpos[0]][blockpos[1]].set_item(itm, 0):
+                                    self.items.append(itm)
+                    if event.key == pygame.K_6:
+                        blockpos = [
+                            int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) // (16 * self.zoom)),
+                            int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) // (16 * self.zoom))
+                        ]
+                        if self.test_for_block_pos(blockpos):
+                            if self.field[blockpos[0]][blockpos[1]].type == "conveyor":
+                                self.field[blockpos[0]][blockpos[1]].clear_item()
+                    if event.key == pygame.K_7:
+                        self.pl_ind = (self.pl_ind + 1) % 2
+                    if event.key == pygame.K_F1:
+                        self.draw_path = not self.draw_path
+                    if event.key == pygame.K_F2:
+                        self.draw_command = not self.draw_command
+                    if event.key == pygame.K_F3:
+                        self.draw_path_index = not self.draw_path_index
+                    if event.key == pygame.K_F4:
+                        self.draw_pos = not self.draw_pos
+                    if event.key == pygame.K_SPACE:
+                        self.pause = not self.pause
+                    if self.action_type == None:
+                        if event.key == pygame.K_f:
+                            self.action_pos = self.display_to_game(mousepos)
+                            self.action_type = "units"
+                        if event.key == pygame.K_g:
+                            self.action_pos = self.display_to_game(mousepos)
+                            self.action_type = "dig"
+                        if event.key == pygame.K_c:
+                            self.action_pos = self.display_to_game(mousepos)
+                            self.action_type = "clear"
+                    if event.key == pygame.K_r:
+                        self.set_rotate = (self.set_rotate + 1) % 4
+                    if event.key == pygame.K_m:
+                        self.menu = "map"
+                #
+                if event.type == pygame.KEYUP:
+                    if event.key == pygame.K_f and self.action_type == "units":
+                        self.action_func()
+                    if event.key == pygame.K_g and self.action_type == "dig":
+                        self.action_func()
+                    if event.key == pygame.K_c and self.action_type == "clear":
+                        self.action_func()
+                #
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 1 and keys[pygame.K_LSHIFT]:#команда юнитам
+                        for obj in self.objects:
+                            if obj._class == "unit" and obj.player == self.player and obj in self.player.selected_units:
+                                mousepos = pygame.mouse.get_pos()
+                                pos = [
+                                    int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) / self.zoom / 16),
+                                    int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) / self.zoom / 16)
+                                ]
+                                obj.move_command(pos)
+                        self.command_index += 1
+                    if event.button == 1 and not keys[pygame.K_LSHIFT]:#нажатие на блок
+                        blockpos = [
+                            int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) // (16 * self.zoom)),
+                            int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) // (16 * self.zoom))
+                        ]
+                        if self.test_for_block_pos(blockpos):
+                            if self.field[blockpos[0]][blockpos[1]].type != "air":
+                                self.field[blockpos[0]][blockpos[1]].action()
+                                self.chunks[blockpos[0] // 16][blockpos[1] // 16].update_image()
+            #
+            if pygame.mouse.get_pressed()[0] and not keys[pygame.K_LSHIFT]:#установка
+                blockpos = [
+                    int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) // (16 * self.zoom)),
+                    int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) // (16 * self.zoom))
+                ]
+                if self.test_for_block_pos(blockpos):
+                    if self.field[blockpos[0]][blockpos[1]].type == "air":
+                        if keys[pygame.K_KP0]:
+                            set_block(self, blockpos, self.players[self.pl_ind], "conveyor", rotate=self.set_rotate)
+                        elif keys[pygame.K_KP1]:
+                            set_block(self, blockpos, self.players[self.pl_ind], "router")
+                        elif keys[pygame.K_KP2]:
+                            set_block(self, blockpos, self.players[self.pl_ind], "junction")
+                        elif keys[pygame.K_KP3]:
+                            set_block(self, blockpos, self.players[self.pl_ind], "sorter")
+                        elif keys[pygame.K_KP4]:
+                            set_block(self, blockpos, self.players[self.pl_ind], "inverted sorter")
+                        elif keys[pygame.K_KP5]:
+                            set_block(self, blockpos, self.players[self.pl_ind], "overflow gate")
+                        elif keys[pygame.K_KP6]:
+                            set_block(self, blockpos, self.players[self.pl_ind], "underflow gate")
+                        elif keys[pygame.K_KP7]:
+                            set_block(self, blockpos, self.players[self.pl_ind], "stone wall")
+                        elif keys[pygame.K_KP8]:
+                            set_block(self, blockpos, self.players[self.pl_ind], "iron wall")
+                        elif keys[pygame.K_KP9]:
+                            set_block(self, blockpos, self.players[self.pl_ind], "stone turret")
+                        else:
+                            set_block(self, blockpos, None, "stone")
+                        self.chunks[blockpos[0] // 16][blockpos[1] // 16].update_image()
+            #
+            if pygame.mouse.get_pressed()[2]:#ломание
+                self.action_type = None
+                blockpos = [
+                    int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) // (16 * self.zoom)),
+                    int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) // (16 * self.zoom))
+                ]
+                if self.test_for_block_pos(blockpos):
+                    if self.field[blockpos[0]][blockpos[1]].type != "air":
+                        self.field[blockpos[0]][blockpos[1]].remove_block()
+            #
+            #ОБНОВЛЕНИЕ
+            #
+            if not self.pause:
+                for obj in self.objects:
+                    obj.update(events)
+                if self.steps % 6 == 0:
+                    for item in self.items:
+                        bl = item[1]
+                        if bl.is_conveyor:
+                            bl.move_item(item)
+                self.steps += 1
+            #
+            for x in range(self.ch_w):
+                for y in range(self.ch_h):
+                    if self.chunks[x][y].image_changes:
+                        self.chunks[x][y].update_image()
+                        self.chunks[x][y].image_changes = False
+            #
+            for x in range(self.ch_w):
+                for y in range(self.ch_h):
+                    if self.chunks[x][y].fog_changes:
+                        self.chunks[x][y].update_fog_image()
+                        self.chunks[x][y].fog_changes = False
+            #
+        elif self.menu == "map":
+            for event in events:
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_m or event.key == pygame.K_ESCAPE:
+                        self.menu = "game"
 
     def action_func(self):
         mousepos = pygame.mouse.get_pos()
@@ -332,90 +338,107 @@ class World(Panel):
         mousepos = pygame.mouse.get_pos()
         #
         screen.fill((0, 0, 0))
-        d = 0
-        count = [math.ceil(self.display_W / (self.zoom * 256)), math.ceil(self.display_H / (self.zoom * 256))]#количество видимых чанков
-        for x in range(int(self.cam_pos[0] / 256 - count[0] / 2), int(self.cam_pos[0] / 256 + count[0] / 2) + 1):
-            for y in range(int(self.cam_pos[1] / 256 - count[1] / 2), int(self.cam_pos[1] / 256 + count[1] / 2) + 1):
-                if x >= 0 and x < self.ch_w and y >= 0 and y < self.ch_h:
-                    self.chunks[x][y].draw(screen)
-                    d += 1
-        #
-        for item in self.items:
-            if item[1].type == "conveyor":
-                pos = item[1].pos
-                img = pygame.transform.scale(items[item[0]], (16 * self.zoom, 16 * self.zoom))
-                screen.blit(img, self.game_to_display([pos[0] * 16, pos[1] * 16]))
-            #screen.blit(pygame.transform.scale(dig_img, (16 * self.zoom, 16 * self.zoom)), self.game_to_display([item[1].pos[0] * 16, item[1].pos[1] * 16]))
-        #
-        blockpos = [
-            int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) // (16 * self.zoom)),
-            int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) // (16 * self.zoom))
-        ]
-        if self.test_for_block_pos(blockpos):
-            bl = self.field[blockpos[0]][blockpos[1]]
-            if bl.player == self.player:
-                if bl.type == "sorter" or bl.type == "inverted sorter":
-                    img = pygame.transform.scale(items[bl.config], (16 * self.zoom, 16 * self.zoom))
-                    screen.blit(img, self.game_to_display([bl.pos[0] * 16, bl.pos[1] * 16 - 16]))
-                if bl.is_construction:
-                    img = pygame.transform.scale(hbbar[int(10 - bl.health / bl.max_health * 10)], (16 * self.zoom, 16 * self.zoom))
-                    screen.blit(img, self.game_to_display([bl.pos[0] * 16, bl.pos[1] * 16 + 16]))
-        #
-        for obj in self.objects:
-            obj.draw(screen)
-        #
-        '''for x in range(int(self.cam_pos[0] / 256 - count[0] / 2), int(self.cam_pos[0] / 256 + count[0] / 2) + 1):
-            for y in range(int(self.cam_pos[1] / 256 - count[1] / 2), int(self.cam_pos[1] / 256 + count[1] / 2) + 1):
-                if x >= 0 and x < self.ch_w and y >= 0 and y < self.ch_h:
-                    screen.blit(self.chunks[x][y].scaled_fog_image, self.game_to_display((x * 256, y * 256)))'''
-        #
-        if self.action_type != None:
-            pos = self.game_to_display(self.action_pos)
-            mpos = self.display_to_game(mousepos)
-            img = pygame.Surface((abs(mousepos[0] - pos[0]), abs(mousepos[1] - pos[1])), pygame.SRCALPHA)
-            if self.action_type == "clear" or self.action_type == "dig":
-                corn_pos = [  # позиция левого верхнего угла выделения
-                    min(mpos[0], self.action_pos[0]) // 16 * 16,
-                    min(mpos[1], self.action_pos[1]) // 16 * 16
-                ]
-                corn_pos2 = [  # позиция правого нижнего угла выделения
-                    max(mpos[0], self.action_pos[0]) // 16 * 16 + 16,
-                    max(mpos[1], self.action_pos[1]) // 16 * 16 + 16
-                ]
-                d_corn_pos = self.game_to_display(corn_pos)
-                d_corn_pos2 = self.game_to_display(corn_pos2)
-                img = pygame.Surface((abs(d_corn_pos[0] - d_corn_pos2[0]), abs(d_corn_pos[1] - d_corn_pos2[1])), pygame.SRCALPHA)
+        if self.menu == "game":
+            d = 0
+            count = [math.ceil(self.display_W / (self.zoom * 256)), math.ceil(self.display_H / (self.zoom * 256))]#количество видимых чанков
+            for x in range(int(self.cam_pos[0] / 256 - count[0] / 2), int(self.cam_pos[0] / 256 + count[0] / 2) + 1):
+                for y in range(int(self.cam_pos[1] / 256 - count[1] / 2), int(self.cam_pos[1] / 256 + count[1] / 2) + 1):
+                    if x >= 0 and x < self.ch_w and y >= 0 and y < self.ch_h:
+                        self.chunks[x][y].draw(screen)
+                        d += 1
             #
-            if self.action_type == "units":
-                img.fill((255, 128, 0, 128))
-            elif self.action_type == "dig":
-                img.fill((255, 0, 0, 100))
-            elif self.action_type == "clear":
-                img.fill((0, 100, 255, 100))
+            for item in self.items:
+                if item[1].type == "conveyor":
+                    pos = item[1].pos
+                    img = pygame.transform.scale(items[item[0]], (16 * self.zoom, 16 * self.zoom))
+                    screen.blit(img, self.game_to_display([pos[0] * 16, pos[1] * 16]))
+                #screen.blit(pygame.transform.scale(dig_img, (16 * self.zoom, 16 * self.zoom)), self.game_to_display([item[1].pos[0] * 16, item[1].pos[1] * 16]))
             #
-            if self.action_type == "units":
-                screen.blit(img, (min(pos[0], mousepos[0]),
-                                  min(pos[1], mousepos[1])))
-            elif self.action_type == "clear" or self.action_type == "dig":
-                corn_pos = self.game_to_display([min(mpos[0], self.action_pos[0]) // 16 * 16, min(mpos[1], self.action_pos[1]) // 16 * 16])
-                screen.blit(img, (min(pos[0], corn_pos[0]),
-                                  min(pos[1], corn_pos[1])))
-        #
-        utils.render_text(str(self.zoom), (0, 25), screen, color=(255, 0, 0))
-        utils.render_text(str(d), (0, 50), screen, color=(255, 0, 0))
-        utils.render_text(str(self.cam_pos), (0, 75), screen, color=(255, 0, 0))
-        utils.render_text("pause: " + str(self.pause), (0, 100), screen, color=(255, 0, 0))
-        utils.render_text("draw path: " + str(self.draw_path), (0, 125), screen, color=(255, 0, 0))
-        utils.render_text("draw command: " + str(self.draw_command), (0, 150), screen, color=(255, 0, 0))
-        utils.render_text("draw path index: " + str(self.draw_path_index), (0, 175), screen, color=(255, 0, 0))
-        utils.render_text("draw pos: " + str(self.draw_pos), (0, 200), screen, color=(255, 0, 0))
-        utils.render_text("player index: " + str(self.pl_ind), (0, 225), screen, color=(255, 0, 0))
-        if self.draw_pos:
             blockpos = [
                 int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) // (16 * self.zoom)),
                 int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) // (16 * self.zoom))
             ]
-            utils.render_text(str(blockpos), mousepos, screen, color=(255, 0, 0))
+            if self.test_for_block_pos(blockpos):
+                bl = self.field[blockpos[0]][blockpos[1]]
+                if bl.player == self.player:
+                    if bl.type == "sorter" or bl.type == "inverted sorter":
+                        img = pygame.transform.scale(items[bl.config], (16 * self.zoom, 16 * self.zoom))
+                        screen.blit(img, self.game_to_display([bl.pos[0] * 16, bl.pos[1] * 16 - 16]))
+                    if bl.is_construction:
+                        img = pygame.transform.scale(hbbar[int(10 - bl.health / bl.max_health * 10)], (16 * self.zoom, 16 * self.zoom))
+                        screen.blit(img, self.game_to_display([bl.pos[0] * 16, bl.pos[1] * 16 + 16]))
+            #
+            for obj in self.objects:
+                obj.draw(screen)
+            #
+            for x in range(int(self.cam_pos[0] / 256 - count[0] / 2), int(self.cam_pos[0] / 256 + count[0] / 2) + 1):#туман войны
+                for y in range(int(self.cam_pos[1] / 256 - count[1] / 2), int(self.cam_pos[1] / 256 + count[1] / 2) + 1):
+                    if x >= 0 and x < self.ch_w and y >= 0 and y < self.ch_h:
+                        screen.blit(self.chunks[x][y].scaled_fog_image, self.game_to_display((x * 256, y * 256)))
+            #
+            if self.action_type != None:
+                pos = self.game_to_display(self.action_pos)
+                mpos = self.display_to_game(mousepos)
+                img = pygame.Surface((abs(mousepos[0] - pos[0]), abs(mousepos[1] - pos[1])), pygame.SRCALPHA)
+                if self.action_type == "clear" or self.action_type == "dig":
+                    corn_pos = [  # позиция левого верхнего угла выделения
+                        min(mpos[0], self.action_pos[0]) // 16 * 16,
+                        min(mpos[1], self.action_pos[1]) // 16 * 16
+                    ]
+                    corn_pos2 = [  # позиция правого нижнего угла выделения
+                        max(mpos[0], self.action_pos[0]) // 16 * 16 + 16,
+                        max(mpos[1], self.action_pos[1]) // 16 * 16 + 16
+                    ]
+                    d_corn_pos = self.game_to_display(corn_pos)
+                    d_corn_pos2 = self.game_to_display(corn_pos2)
+                    img = pygame.Surface((abs(d_corn_pos[0] - d_corn_pos2[0]), abs(d_corn_pos[1] - d_corn_pos2[1])), pygame.SRCALPHA)
+                #
+                if self.action_type == "units":
+                    img.fill((255, 128, 0, 128))
+                elif self.action_type == "dig":
+                    img.fill((255, 0, 0, 100))
+                elif self.action_type == "clear":
+                    img.fill((0, 100, 255, 100))
+                #
+                if self.action_type == "units":
+                    screen.blit(img, (min(pos[0], mousepos[0]),
+                                      min(pos[1], mousepos[1])))
+                elif self.action_type == "clear" or self.action_type == "dig":
+                    corn_pos = self.game_to_display([min(mpos[0], self.action_pos[0]) // 16 * 16, min(mpos[1], self.action_pos[1]) // 16 * 16])
+                    screen.blit(img, (min(pos[0], corn_pos[0]),
+                                      min(pos[1], corn_pos[1])))
+            #
+            pygame.draw.rect(screen, (90, 90, 90), (self.display_W - self.w - 4, 0, self.w + 4, self.h + 4))
+            screen.blit(self.minimap, (self.display_W - self.w - 2, 2))
+            pos1 = [self.display_W-2+int((self.cam_pos[0] - self.display_W / self.zoom / 2) // 16), self.display_H-2+int((self.cam_pos[1] - self.display_H / self.zoom / 2) // 16)]#левый верхний
+            pos2 = [self.display_W-2+int((self.cam_pos[0] + self.display_W / self.zoom / 2) // 16), self.display_H-2+int((self.cam_pos[1] - self.display_H / self.zoom / 2) // 16)]#правый верхний
+            pos3 = [self.display_W-2+int((self.cam_pos[0] - self.display_W / self.zoom / 2) // 16), self.display_H-2+int((self.cam_pos[1] + self.display_H / self.zoom / 2) // 16)]#левый нижний
+            pos4 = [self.display_W-2+int((self.cam_pos[0] + self.display_W / self.zoom / 2) // 16), self.display_H-2+int((self.cam_pos[1] + self.display_H / self.zoom / 2) // 16)]#правый нижний
+            print(pos1)
+            pos5 = [self.cam_pos[0]]
+            pygame.draw.rect(screen, (255, 190, 0), (pos5[0], pos5[1], 2, 2))
+            #
+            utils.render_text(str(self.zoom), (0, 25), screen, color=(255, 0, 0))
+            utils.render_text(str(d), (0, 50), screen, color=(255, 0, 0))
+            utils.render_text(str(self.cam_pos), (0, 75), screen, color=(255, 0, 0))
+            utils.render_text("pause: " + str(self.pause), (0, 100), screen, color=(255, 0, 0))
+            utils.render_text("draw path: " + str(self.draw_path), (0, 125), screen, color=(255, 0, 0))
+            utils.render_text("draw command: " + str(self.draw_command), (0, 150), screen, color=(255, 0, 0))
+            utils.render_text("draw path index: " + str(self.draw_path_index), (0, 175), screen, color=(255, 0, 0))
+            utils.render_text("draw pos: " + str(self.draw_pos), (0, 200), screen, color=(255, 0, 0))
+            utils.render_text("player index: " + str(self.pl_ind), (0, 225), screen, color=(255, 0, 0))
+            if self.draw_pos:
+                blockpos = [
+                    int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) // (16 * self.zoom)),
+                    int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) // (16 * self.zoom))
+                ]
+                utils.render_text(str(blockpos), mousepos, screen, color=(255, 0, 0))
+        elif self.menu == "map":
+            pygame.draw.rect(screen, (255, 255, 255), (0, 0, self.w + 4, self.w + 4))
+            screen.blit(self.minimap, (2, 2))
+        #
+        for button in self.buttons:
+            button.draw(screen)
 
     def display_to_game(self, disp_pos):#перевод экранных координат в игровые
         pos = [
@@ -436,3 +459,23 @@ class World(Panel):
 
     def test_for_pos(self, pos):
         return(pos[0] >= 0 and pos[0] < self.w * 16 and pos[1] >= 0 and pos[1] < self.h * 16)
+
+    def update_minimap(self, pos):
+        if self.player.fog[pos[0]][pos[1]] == 2:
+            if self.field[pos[0]][pos[1]].type == "air":
+                if self.ground_field[pos[0]][pos[1]].type == "grass":
+                    pygame.draw.rect(self.minimap, (0, 167, 0), (pos[0], pos[1], 1, 1))
+                elif self.ground_field[pos[0]][pos[1]].type == "sand":
+                    pygame.draw.rect(self.minimap, (251, 222, 133), (pos[0], pos[1], 1, 1))
+                elif self.ground_field[pos[0]][pos[1]].type == "stone floor":
+                    pygame.draw.rect(self.minimap, (70, 70, 70), (pos[0], pos[1], 1, 1))
+            elif self.field[pos[0]][pos[1]].type == "water":
+                pygame.draw.rect(self.minimap, (0, 133, 254), (pos[0], pos[1], 1, 1))
+            elif self.field[pos[0]][pos[1]].type == "stone":
+                pygame.draw.rect(self.minimap, (105, 105, 105), (pos[0], pos[1], 1, 1))
+        elif self.player.fog[pos[0]][pos[1]] == 1:
+            img = pygame.Surface((1, 1), pygame.SRCALPHA)
+            img.fill((0, 0, 0, 128))
+            self.minimap.blit(img, pos)
+        elif self.player.fog[pos[0]][pos[1]] == 0:
+            pygame.draw.rect(self.minimap, (0, 0, 0), (pos[0], pos[1], 1, 1))
