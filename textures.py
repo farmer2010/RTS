@@ -17,6 +17,8 @@ underflow_gate_img = pygame.image.load("files/images/underflow_gate.png")
 stone_wall_img = pygame.image.load("files/images/stone_wall.png")
 iron_wall_img = pygame.image.load("files/images/iron_wall.png")
 enemy_edge_img = pygame.image.load("files/images/enemy_edge.png")
+small_turret_img = pygame.image.load("files/images/small_turret.png")
+stone_turret_img = pygame.image.load("files/images/stone_turret.png")
 
 hbbar = [
     pygame.image.load("files/images/hpbar1.png"),

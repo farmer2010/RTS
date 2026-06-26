@@ -11,6 +11,7 @@ from blocks.sorter import *
 from blocks.item_vacuum import *
 from blocks.gate import *
 from blocks.wall import *
+from blocks.small_turret import *
 
 def get_block(type):
     if type == "air":

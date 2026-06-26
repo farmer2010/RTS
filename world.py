@@ -238,6 +238,8 @@ class World(Panel):
                         self.field[blockpos[0]][blockpos[1]] = Wall(self, blockpos, self.players[self.pl_ind], "stone wall")
                     elif keys[pygame.K_KP8]:
                         self.field[blockpos[0]][blockpos[1]] = Wall(self, blockpos, self.players[self.pl_ind], "iron wall")
+                    elif keys[pygame.K_KP9]:
+                        self.field[blockpos[0]][blockpos[1]] = SmallTurret(self, blockpos, self.players[self.pl_ind], "stone turret")
                     elif keys[pygame.K_KP_DIVIDE]:
                         self.field[blockpos[0]][blockpos[1]] = ItemVacuum(self, blockpos)
                     else:

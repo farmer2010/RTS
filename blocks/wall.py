@@ -5,7 +5,11 @@ from random import randint as rand
 
 class Wall(Block):
     def __init__(self, world, pos, player, type="stone wall"):
-        Block.__init__(self, world, type, pos, player=player)
+        if type == "stone wall":
+            h = 150
+        elif type == "iron wall":
+            h = 250
+        Block.__init__(self, world, type, pos, player=player, health=h)
         self.is_construction = 1
 
     def get_image(self):

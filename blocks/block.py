@@ -3,7 +3,7 @@ import math
 from blocks import *
 
 class Block():
-    def __init__(self, world, type, pos, player=None, health=100):
+    def __init__(self, world, type, pos, player=None, health=50):
         self._class = "block"
         self.type = type
         self.player = player
