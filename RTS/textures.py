@@ -14,7 +14,22 @@ router_img = pygame.image.load("files/images/router.png")
 junction_img = pygame.image.load("files/images/junction.png")
 overflow_gate_img = pygame.image.load("files/images/overflow_gate.png")
 underflow_gate_img = pygame.image.load("files/images/underflow_gate.png")
+stone_wall_img = pygame.image.load("files/images/stone_wall.png")
+iron_wall_img = pygame.image.load("files/images/iron_wall.png")
+enemy_edge_img = pygame.image.load("files/images/enemy_edge.png")
 
+block_hbbar = [
+    pygame.image.load("files/images/block_hpbar1.png"),
+    pygame.image.load("files/images/block_hpbar2.png"),
+    pygame.image.load("files/images/block_hpbar3.png"),
+    pygame.image.load("files/images/block_hpbar4.png"),
+    pygame.image.load("files/images/block_hpbar5.png"),
+    pygame.image.load("files/images/block_hpbar6.png"),
+    pygame.image.load("files/images/block_hpbar7.png"),
+    pygame.image.load("files/images/block_hpbar8.png"),
+    pygame.image.load("files/images/block_hpbar9.png"),
+    pygame.image.load("files/images/block_hpbar10.png")
+]
 
 crack = [
     pygame.image.load("files/images/crack1.png"),

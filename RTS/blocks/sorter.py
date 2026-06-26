@@ -3,8 +3,8 @@ from textures import *
 from random import randint as rand
 
 class Sorter(Block):
-    def __init__(self, world, pos, type="sorter"):
-        Block.__init__(self, world, type, pos)
+    def __init__(self, world, pos, player, type="sorter"):
+        Block.__init__(self, world, type, pos, player=player)
         self.item = None
         self.image = router_img
         self.has_hitbox = False
@@ -18,6 +18,7 @@ class Sorter(Block):
         self.index = 0
         self.rotate = 0
         self.config = "stone"
+        self.is_construction = 1
 
     def set_item(self, item, rotate):
         if self.item == None:
@@ -70,9 +71,10 @@ class Sorter(Block):
             return (inverted_sorter_images[self.config])
 
     def action(self):
-        if self.config == "stone":
-            self.config = "coal"
-        elif self.config == "coal":
-            self.config = ""
-        elif self.config == "":
-            self.config = "stone"
+        if self.player == self.world.player:
+            if self.config == "stone":
+                self.config = "coal"
+            elif self.config == "coal":
+                self.config = ""
+            elif self.config == "":
+                self.config = "stone"

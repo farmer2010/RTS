@@ -3,8 +3,8 @@ from textures import *
 from random import randint as rand
 
 class Conveyor(Block):
-    def __init__(self, world, pos, rotate=0):
-        Block.__init__(self, world, "conveyor", pos)
+    def __init__(self, world, pos, player, rotate=0):
+        Block.__init__(self, world, "conveyor", pos, player=player)
         self.item = None
         self.rotate = rotate
         self.image = conveyors[0][0]
@@ -16,6 +16,7 @@ class Conveyor(Block):
             [-1, 0]
         ]
         self.is_conveyor = 1
+        self.is_construction = 1
 
     def set_item(self, item, rotate):
         if self.item == None:

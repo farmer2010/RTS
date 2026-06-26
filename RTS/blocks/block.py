@@ -3,9 +3,10 @@ import math
 from blocks import *
 
 class Block():
-    def __init__(self, world, type, pos):
+    def __init__(self, world, type, pos, player=None, health=100):
         self._class = "block"
         self.type = type
+        self.player = player
         self.world = world
         self.pos = pos
         self.image = pygame.Surface((16, 16))
@@ -14,8 +15,10 @@ class Block():
         self.mining_speed = 50
         self.speed = 1
         self.can_mined = 0
-        self.health = 100
+        self.health = health
+        self.max_health = health
         self.is_conveyor = 0
+        self.is_construction = 0
 
     def update(self, events):
         pass

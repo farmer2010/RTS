@@ -37,6 +37,7 @@ class World(Panel):
         self.draw_path_index = 0
         self.draw_pos = 0
         self.air_generator = Air
+        self.pl_ind = 0
         #
         self.objects = []
         self.players = [UserPlayer(self), AiPlayer(self)]
@@ -158,6 +159,8 @@ class World(Panel):
                     if self.test_for_block_pos(blockpos):
                         if self.field[blockpos[0]][blockpos[1]].type == "conveyor":
                             self.field[blockpos[0]][blockpos[1]].clear_item()
+                if event.key == pygame.K_7:
+                    self.pl_ind = (self.pl_ind + 1) % 2
                 if event.key == pygame.K_F1:
                     self.draw_path = not self.draw_path
                 if event.key == pygame.K_F2:
@@ -218,19 +221,23 @@ class World(Panel):
             if self.test_for_block_pos(blockpos):
                 if self.field[blockpos[0]][blockpos[1]].type == "air":
                     if keys[pygame.K_KP0]:
-                        self.field[blockpos[0]][blockpos[1]] = Conveyor(self, blockpos, rotate=self.set_rotate)
+                        self.field[blockpos[0]][blockpos[1]] = Conveyor(self, blockpos, self.players[self.pl_ind], rotate=self.set_rotate)
                     elif keys[pygame.K_KP1]:
-                        self.field[blockpos[0]][blockpos[1]] = Router(self, blockpos)
+                        self.field[blockpos[0]][blockpos[1]] = Router(self, blockpos, self.players[self.pl_ind])
                     elif keys[pygame.K_KP2]:
-                        self.field[blockpos[0]][blockpos[1]] = Junction(self, blockpos)
+                        self.field[blockpos[0]][blockpos[1]] = Junction(self, blockpos, self.players[self.pl_ind])
                     elif keys[pygame.K_KP3]:
-                        self.field[blockpos[0]][blockpos[1]] = Sorter(self, blockpos, "sorter")
+                        self.field[blockpos[0]][blockpos[1]] = Sorter(self, blockpos, self.players[self.pl_ind], "sorter")
                     elif keys[pygame.K_KP4]:
-                        self.field[blockpos[0]][blockpos[1]] = Sorter(self, blockpos, "inverted sorter")
+                        self.field[blockpos[0]][blockpos[1]] = Sorter(self, blockpos, self.players[self.pl_ind], "inverted sorter")
                     elif keys[pygame.K_KP5]:
-                        self.field[blockpos[0]][blockpos[1]] = Gate(self, blockpos, "overflow gate")
+                        self.field[blockpos[0]][blockpos[1]] = Gate(self, blockpos, self.players[self.pl_ind], "overflow gate")
                     elif keys[pygame.K_KP6]:
-                        self.field[blockpos[0]][blockpos[1]] = Gate(self, blockpos, "underflow gate")
+                        self.field[blockpos[0]][blockpos[1]] = Gate(self, blockpos, self.players[self.pl_ind], "underflow gate")
+                    elif keys[pygame.K_KP7]:
+                        self.field[blockpos[0]][blockpos[1]] = Wall(self, blockpos, self.players[self.pl_ind], "stone wall")
+                    elif keys[pygame.K_KP8]:
+                        self.field[blockpos[0]][blockpos[1]] = Wall(self, blockpos, self.players[self.pl_ind], "iron wall")
                     elif keys[pygame.K_KP_DIVIDE]:
                         self.field[blockpos[0]][blockpos[1]] = ItemVacuum(self, blockpos)
                     else:
@@ -344,9 +351,13 @@ class World(Panel):
         ]
         if self.test_for_block_pos(blockpos):
             bl = self.field[blockpos[0]][blockpos[1]]
-            if bl.type == "sorter" or bl.type == "inverted sorter":
-                img = pygame.transform.scale(items[bl.config], (16 * self.zoom, 16 * self.zoom))
-                screen.blit(img, self.game_to_display([bl.pos[0] * 16, bl.pos[1] * 16 - 16]))
+            if bl.player == self.player:
+                if bl.type == "sorter" or bl.type == "inverted sorter":
+                    img = pygame.transform.scale(items[bl.config], (16 * self.zoom, 16 * self.zoom))
+                    screen.blit(img, self.game_to_display([bl.pos[0] * 16, bl.pos[1] * 16 - 16]))
+                if bl.is_construction:
+                    img = pygame.transform.scale(block_hbbar[10 - int(bl.health/bl.max_health * 10)], (16 * self.zoom, 16 * self.zoom))
+                    screen.blit(img, self.game_to_display([bl.pos[0] * 16, bl.pos[1] * 16 + 16]))
         #
         for obj in self.objects:
             obj.draw(screen)
@@ -396,6 +407,7 @@ class World(Panel):
         utils.render_text("draw command: " + str(self.draw_command), (0, 150), screen, color=(255, 0, 0))
         utils.render_text("draw path index: " + str(self.draw_path_index), (0, 175), screen, color=(255, 0, 0))
         utils.render_text("draw pos: " + str(self.draw_pos), (0, 200), screen, color=(255, 0, 0))
+        utils.render_text("player index: " + str(self.pl_ind), (0, 225), screen, color=(255, 0, 0))
         if self.draw_pos:
             blockpos = [
                 int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) // (16 * self.zoom)),

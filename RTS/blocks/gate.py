@@ -3,8 +3,8 @@ from textures import *
 from random import randint as rand
 
 class Gate(Block):
-    def __init__(self, world, pos, type="overflow gate"):
-        Block.__init__(self, world, type, pos)
+    def __init__(self, world, pos, player, type="overflow gate"):
+        Block.__init__(self, world, type, pos, player=player)
         self.item = None
         self.image = router_img
         self.has_hitbox = False
@@ -17,6 +17,7 @@ class Gate(Block):
         self.is_conveyor = 1
         self.index = 0
         self.rotate = 0
+        self.is_construction = 1
 
     def set_item(self, item, rotate):
         if self.item == None:

@@ -3,8 +3,8 @@ from textures import *
 from random import randint as rand
 
 class Junction(Block):
-    def __init__(self, world, pos):
-        Block.__init__(self, world, "junction", pos)
+    def __init__(self, world, pos, player):
+        Block.__init__(self, world, "junction", pos, player=player)
         self.items = [None, None, None, None]
         self.image = junction_img
         self.has_hitbox = False
@@ -15,6 +15,7 @@ class Junction(Block):
             [-1, 0]
         ]
         self.is_conveyor = 1
+        self.is_construction = 1
 
     def set_item(self, item, rotate):
         if self.items[rotate] == None:

@@ -3,8 +3,8 @@ from textures import *
 from random import randint as rand
 
 class Router(Block):
-    def __init__(self, world, pos):
-        Block.__init__(self, world, "router", pos)
+    def __init__(self, world, pos, player):
+        Block.__init__(self, world, "router", pos, player=player)
         self.item = None
         self.image = router_img
         self.has_hitbox = False
@@ -16,6 +16,7 @@ class Router(Block):
         ]
         self.is_conveyor = 1
         self.index = 0
+        self.is_construction = 1
 
     def set_item(self, item, rotate):
         if self.item == None:
