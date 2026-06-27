@@ -30,6 +30,8 @@ class Block():
         self.world.player.task_units[self.pos[0]][self.pos[1]] = None
         self.world.player.task_field[self.pos[0]][self.pos[1]] = 0
         self.killed = 1
+        if self.world.player.fog[self.pos[0]][self.pos[1]] == 2:
+            self.world.update_minimap(self.pos)
 
     def kill(self):
         self.remove_block()

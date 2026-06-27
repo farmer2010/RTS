@@ -52,13 +52,15 @@ class TurretUnit(Unit):#пушка турели
         if self.target != None and self.target._class == "block" and ((self.target.pos[0] * 16 - self.pos[0]) ** 2 + (self.target.pos[1] * 16 - self.pos[1]) ** 2 > (self.fog_radius * 16) ** 2 or self.target.killed):
             self.target = None
         if self.target != None and self.reload_timer == 0:
-            if self.target._class == "unit":
-                rotate = math.atan2(self.target.pos[1] - self.pos[1], self.target.pos[0] - self.pos[0])
-            elif self.target._class == "block":
-                rotate = math.atan2(self.target.pos[1] * 16 + 8 - self.pos[1], self.target.pos[0] * 16 + 8 - self.pos[0])
-            self.rotate = rotate
-            self.world.objects.append(Projectile(self.world, self.player, self.pos.copy(), 5, 5, rotate, 5, self.fog_radius*16, 10))
-            self.reload_timer = self.reload
+            if self.world.field[int(self.pos[0] // 16)][int(self.pos[1] // 16)].items > 0:
+                self.world.field[int(self.pos[0] // 16)][int(self.pos[1] // 16)].items -= 1
+                if self.target._class == "unit":
+                    rotate = math.atan2(self.target.pos[1] - self.pos[1], self.target.pos[0] - self.pos[0])
+                elif self.target._class == "block":
+                    rotate = math.atan2(self.target.pos[1] * 16 + 8 - self.pos[1], self.target.pos[0] * 16 + 8 - self.pos[0])
+                self.rotate = rotate
+                self.world.objects.append(Projectile(self.world, self.player, self.pos.copy(), 5, 5, rotate, 5, self.fog_radius*16, 10))
+                self.reload_timer = self.reload
         if self.reload_timer > 0:
             self.reload_timer -= 1
 

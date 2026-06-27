@@ -19,6 +19,7 @@ iron_wall_img = pygame.image.load("files/images/iron_wall.png")
 enemy_edge_img = pygame.image.load("files/images/enemy_edge.png")
 small_turret_img = pygame.image.load("files/images/small_turret.png")
 stone_turret_img = pygame.image.load("files/images/stone_turret.png")
+dense_stone_turret_img = pygame.image.load("files/images/dense_stone_turret.png")
 
 hbbar = [
     pygame.image.load("files/images/hpbar1.png"),
@@ -32,6 +33,20 @@ hbbar = [
     pygame.image.load("files/images/hpbar9.png"),
     pygame.image.load("files/images/hpbar10.png")
 ]
+progressbar = [
+    pygame.image.load("files/images/progressbar1.png"),
+    pygame.image.load("files/images/progressbar2.png"),
+    pygame.image.load("files/images/progressbar3.png"),
+    pygame.image.load("files/images/progressbar4.png"),
+    pygame.image.load("files/images/progressbar5.png"),
+    pygame.image.load("files/images/progressbar6.png"),
+    pygame.image.load("files/images/progressbar7.png"),
+    pygame.image.load("files/images/progressbar8.png"),
+    pygame.image.load("files/images/progressbar9.png"),
+    pygame.image.load("files/images/progressbar10.png"),
+    pygame.image.load("files/images/progressbar11.png")
+]
+
 
 crack = [
     pygame.image.load("files/images/crack1.png"),

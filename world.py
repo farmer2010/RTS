@@ -414,14 +414,17 @@ class World(Panel):
                     if bl.is_construction:
                         img = pygame.transform.scale(hbbar[int(10 - bl.health / bl.max_health * 10)], (16 * self.zoom, 16 * self.zoom))
                         screen.blit(img, self.game_to_display([bl.pos[0] * 16, bl.pos[1] * 16 + 16]))
+                    if bl.type == "stone turret":
+                        img = pygame.transform.scale(progressbar[int(10 - bl.items / bl.max_items * 10)],(16 * self.zoom, 16 * self.zoom))
+                        screen.blit(img, self.game_to_display([bl.pos[0] * 16, bl.pos[1] * 16 + 16]))
             #
             for obj in self.objects:
                 obj.draw(screen)
             #
-            for x in range(int(self.cam_pos[0] / 256 - count[0] / 2), int(self.cam_pos[0] / 256 + count[0] / 2) + 1):#туман войны
+            '''for x in range(int(self.cam_pos[0] / 256 - count[0] / 2), int(self.cam_pos[0] / 256 + count[0] / 2) + 1):#туман войны
                 for y in range(int(self.cam_pos[1] / 256 - count[1] / 2), int(self.cam_pos[1] / 256 + count[1] / 2) + 1):
                     if x >= 0 and x < self.ch_w and y >= 0 and y < self.ch_h:
-                        screen.blit(self.chunks[x][y].scaled_fog_image, self.game_to_display((x * 256, y * 256)))
+                        screen.blit(self.chunks[x][y].scaled_fog_image, self.game_to_display((x * 256, y * 256)))'''
             #
             if self.action_type != None:
                 pos = self.game_to_display(self.action_pos)
