@@ -33,6 +33,10 @@ class World(Panel):
         self.steps = 0
         self.menu = "game"
         #
+        self.map_zoom = 4
+        self.map_pos = [self.w/2, self.h/2]
+        self.map_speed = 3
+        #
         self.draw_path = 0
         self.draw_command = 0
         self.draw_path_index = 0
@@ -283,10 +287,51 @@ class World(Panel):
                         self.chunks[x][y].fog_changes = False
             #
         elif self.menu == "map":
+            wheel = self.input_manager.get_mousewheel()
+            if wheel != 0:
+                self.map_zoom = max(min(self.map_zoom + wheel / 10, 10), 1)
+            #
+            move_keys = [#перемещение камеры
+                keys[pygame.K_s],
+                keys[pygame.K_a],
+                keys[pygame.K_w],
+                keys[pygame.K_d]
+            ]
+            if sum(move_keys) > 0:
+                if move_keys[1] + move_keys[3] == 0:
+                    if move_keys[0]:
+                        self.map_pos[1] -= self.map_speed
+                    elif move_keys[2]:
+                        self.map_pos[1] += self.map_speed
+                elif move_keys[0] + move_keys[2] == 0:
+                    if move_keys[3]:
+                        self.map_pos[0] -= self.map_speed
+                    elif move_keys[1]:
+                        self.map_pos[0] += self.map_speed
+                else:
+                    if move_keys[0]:
+                        if move_keys[3]:
+                            self.map_pos[0] -= self.map_speed / 1.4
+                            self.map_pos[1] -= self.map_speed / 1.4
+                        elif move_keys[1]:
+                            self.map_pos[0] += self.map_speed / 1.4
+                            self.map_pos[1] -= self.map_speed / 1.4
+                    elif move_keys[2]:
+                        if move_keys[3]:
+                            self.map_pos[0] -= self.map_speed / 1.4
+                            self.map_pos[1] += self.map_speed / 1.4
+                        elif move_keys[1]:
+                            self.map_pos[0] += self.map_speed / 1.4
+                            self.map_pos[1] += self.map_speed / 1.4
+            #
             for event in events:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_m or event.key == pygame.K_ESCAPE:
                         self.menu = "game"
+                if event.type == pygame.MOUSEMOTION and pygame.mouse.get_pressed()[0]:
+                    dx, dy = event.rel
+                    self.map_pos[0] += dx / self.map_zoom
+                    self.map_pos[1] += dy / self.map_zoom
 
     def action_func(self):
         mousepos = pygame.mouse.get_pos()
@@ -435,8 +480,12 @@ class World(Panel):
                 ]
                 utils.render_text(str(blockpos), mousepos, screen, color=(255, 0, 0))
         elif self.menu == "map":
-            pygame.draw.rect(screen, (255, 255, 255), (0, 0, self.w + 4, self.w + 4))
-            screen.blit(self.minimap, (2, 2))
+            pos = [
+                (self.map_pos[0] - self.w) * self.map_zoom + W / 2,
+                (self.map_pos[1] - self.h) * self.map_zoom + H / 2,
+            ]
+            pygame.draw.rect(screen, (255, 255, 255), (pos[0] - 2, pos[1] - 2, self.w * self.map_zoom + 4, self.h * self.map_zoom + 4))
+            screen.blit(pygame.transform.scale(self.minimap, (self.w * self.map_zoom, self.h * self.map_zoom)), pos)
         #
         for button in self.buttons:
             button.draw(screen)
