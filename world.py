@@ -53,7 +53,8 @@ class World(Panel):
         self.action_pos = [0, 0]
         #
         self.minimap = pygame.Surface((self.w, self.h), pygame.SRCALPHA)
-        self.minimap.fill((0, 0, 0))
+        self.fog_minimap = pygame.Surface((self.w, self.h), pygame.SRCALPHA)
+        self.fog_minimap.fill((0, 0, 0))
         self.field = [[Air(self, (x, y)) for y in range(self.h)] for x in range(self.w)]
         self.ground_field = [[Air(self, (x, y)) for y in range(self.h)] for x in range(self.w)]
         self.unit_field = [[[] for y in range(self.w)] for x in range(self.h)]
@@ -72,6 +73,7 @@ class World(Panel):
                     self.ground_field[x][y] = Sand(self, (x, y))
                 else:
                     self.field[x][y] = Water(self, (x, y))
+                self.update_minimap((x, y))
         self.chunks = [[Chunk(self, (x, y)) for y in range(self.ch_w)] for x in range(self.ch_h)]
 
     def update(self, events):
@@ -289,7 +291,7 @@ class World(Panel):
         elif self.menu == "map":
             wheel = self.input_manager.get_mousewheel()
             if wheel != 0:
-                self.map_zoom = max(min(self.map_zoom + wheel / 10, 10), 1)
+                self.map_zoom = max(min(self.map_zoom + wheel / 10, 15), 1)
             #
             move_keys = [#перемещение камеры
                 keys[pygame.K_s],
@@ -455,6 +457,7 @@ class World(Panel):
             #
             pygame.draw.rect(screen, (90, 90, 90), (self.display_W - self.w - 4, 0, self.w + 4, self.h + 4))
             screen.blit(self.minimap, (self.display_W - self.w - 2, 2))
+            screen.blit(self.fog_minimap, (self.display_W - self.w - 2, 2))
             pos1 = [max((self.cam_pos[0] - W / self.zoom / 2) // 16, 0), min((self.cam_pos[1] - H / self.zoom / 2) // 16, self.h)]#левый верхний
             pos2 = [max((self.cam_pos[0] + W / self.zoom / 2) // 16, 0), min((self.cam_pos[1] - H / self.zoom / 2) // 16, self.h)]#правый верхний
             pos3 = [max((self.cam_pos[0] - W / self.zoom / 2) // 16, 0), min((self.cam_pos[1] + H / self.zoom / 2) // 16, self.h)]#левый нижний
@@ -480,12 +483,25 @@ class World(Panel):
                 ]
                 utils.render_text(str(blockpos), mousepos, screen, color=(255, 0, 0))
         elif self.menu == "map":
-            pos = [
+            mpos = [
                 (self.map_pos[0] - self.w) * self.map_zoom + W / 2,
                 (self.map_pos[1] - self.h) * self.map_zoom + H / 2,
             ]
-            pygame.draw.rect(screen, (255, 255, 255), (pos[0] - 2, pos[1] - 2, self.w * self.map_zoom + 4, self.h * self.map_zoom + 4))
-            screen.blit(pygame.transform.scale(self.minimap, (self.w * self.map_zoom, self.h * self.map_zoom)), pos)
+            pygame.draw.rect(screen, (255, 255, 255), (mpos[0] - 2, mpos[1] - 2, self.w * self.map_zoom + 4, self.h * self.map_zoom + 4))
+            screen.blit(pygame.transform.scale(self.minimap, (self.w * self.map_zoom, self.h * self.map_zoom)), mpos)
+            #
+            for obj in self.objects:
+                if obj._class == "unit":
+                    pos = [
+                        (self.map_pos[0] - self.w + obj.pos[0]/16) * self.map_zoom + W / 2,
+                        (self.map_pos[1] - self.h + obj.pos[1]/16) * self.map_zoom + H / 2,
+                    ]
+                    if obj.player == self.player:
+                        color = (0, 0, 255)
+                    else:
+                        color = (255, 0, 0)
+                    pygame.draw.rect(screen, color, (pos[0], pos[1], obj.w/16 * self.map_zoom, obj.h/16 *self.map_zoom))
+            screen.blit(pygame.transform.scale(self.fog_minimap, (self.w * self.map_zoom, self.h * self.map_zoom)), mpos)
         #
         for button in self.buttons:
             button.draw(screen)
@@ -511,21 +527,27 @@ class World(Panel):
         return(pos[0] >= 0 and pos[0] < self.w * 16 and pos[1] >= 0 and pos[1] < self.h * 16)
 
     def update_minimap(self, pos):
-        if self.player.fog[pos[0]][pos[1]] == 2:
-            if self.field[pos[0]][pos[1]].type == "air":
-                if self.ground_field[pos[0]][pos[1]].type == "grass":
-                    pygame.draw.rect(self.minimap, (0, 167, 0), (pos[0], pos[1], 1, 1))
-                elif self.ground_field[pos[0]][pos[1]].type == "sand":
-                    pygame.draw.rect(self.minimap, (251, 222, 133), (pos[0], pos[1], 1, 1))
-                elif self.ground_field[pos[0]][pos[1]].type == "stone floor":
-                    pygame.draw.rect(self.minimap, (70, 70, 70), (pos[0], pos[1], 1, 1))
-            elif self.field[pos[0]][pos[1]].type == "water":
-                pygame.draw.rect(self.minimap, (0, 133, 254), (pos[0], pos[1], 1, 1))
-            elif self.field[pos[0]][pos[1]].type == "stone":
-                pygame.draw.rect(self.minimap, (105, 105, 105), (pos[0], pos[1], 1, 1))
+        if self.field[pos[0]][pos[1]].type == "air":
+            if self.ground_field[pos[0]][pos[1]].type == "grass":
+                pygame.draw.rect(self.minimap, (0, 167, 0), (pos[0], pos[1], 1, 1))
+            elif self.ground_field[pos[0]][pos[1]].type == "sand":
+                pygame.draw.rect(self.minimap, (251, 222, 133), (pos[0], pos[1], 1, 1))
+            elif self.ground_field[pos[0]][pos[1]].type == "stone floor":
+                pygame.draw.rect(self.minimap, (70, 70, 70), (pos[0], pos[1], 1, 1))
+        elif self.field[pos[0]][pos[1]].type == "water":
+            pygame.draw.rect(self.minimap, (0, 133, 254), (pos[0], pos[1], 1, 1))
+        elif self.field[pos[0]][pos[1]].type == "stone":
+            pygame.draw.rect(self.minimap, (105, 105, 105), (pos[0], pos[1], 1, 1))
+        self.update_fog_minimap(pos)
+
+    def update_fog_minimap(self, pos):
+        if self.player.fog[pos[0]][pos[1]] == 0:
+            self.fog_minimap.set_at(pos, (0, 0, 0))
         elif self.player.fog[pos[0]][pos[1]] == 1:
+            c = self.minimap.get_at(pos)
+            self.fog_minimap.set_at(pos, c)
             img = pygame.Surface((1, 1), pygame.SRCALPHA)
             img.fill((0, 0, 0, 128))
-            self.minimap.blit(img, pos)
-        elif self.player.fog[pos[0]][pos[1]] == 0:
-            pygame.draw.rect(self.minimap, (0, 0, 0), (pos[0], pos[1], 1, 1))
+            self.fog_minimap.blit(img, pos)
+        elif self.player.fog[pos[0]][pos[1]] == 2:
+            self.fog_minimap.set_at(pos, (0, 0, 0, 0))

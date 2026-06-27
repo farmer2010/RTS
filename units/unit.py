@@ -246,11 +246,13 @@ class Unit(Entity):
                                 self.player.fog[x][y] = 1
                                 self.world.chunks[int(x // 16)][int(y // 16)].fog_blocks[x % 16][y % 16].blit(self.world.ground_field[x][y].get_image())
                                 self.world.chunks[int(x // 16)][int(y // 16)].fog_blocks[x % 16][y % 16].blit(self.world.field[x][y].get_image())
+                                self.world.update_fog_minimap((x, y))
                         elif func == "add":
                             if self not in self.player.fog_units[x][y]:
                                 self.player.fog_units[x][y].append(self)
-                            if self in self.player.fog_units[x][y]:
+                            if len(self.player.fog_units[x][y]) == 1:
                                 self.player.fog[x][y] = 2
+                                self.world.update_fog_minimap((x, y))
             #
             count = [math.ceil(self.fog_radius * 2 / 16), math.ceil(self.fog_radius * 2 / 16)]  # количество видимых чанков
             for x in range(int(self.pos[0] / 256 - count[0] / 2), int(self.pos[0] / 256 + count[0] / 2) + 1):
@@ -310,13 +312,16 @@ class Unit(Entity):
                                 self.player.fog[npos[0]][npos[1]] = 1
                                 self.world.chunks[int(npos[0] // 16)][int(npos[1] // 16)].fog_blocks[npos[0] % 16][npos[1] % 16].blit(self.world.ground_field[npos[0]][npos[1]].get_image())
                                 self.world.chunks[int(npos[0] // 16)][int(npos[1] // 16)].fog_blocks[npos[0] % 16][npos[1] % 16].blit(self.world.field[npos[0]][npos[1]].get_image())
+                                self.world.update_fog_minimap(npos)
                 #
                 for p in self.fog_presets[rotate][0]:
                     npos = [new_pos[0] + p[0], new_pos[1] + p[1]]
                     if self.world.test_for_block_pos(npos):
                         if self not in self.player.fog_units[npos[0]][npos[1]]:
                             self.player.fog_units[npos[0]][npos[1]].append(self)
+                        if len(self.player.fog_units[npos[0]][npos[1]]) == 1:
                             self.player.fog[npos[0]][npos[1]] = 2
+                            self.world.update_fog_minimap(npos)
                 #
                 for x in range(int(self.pos[0] / 256 - (self.fog_radius + 1) / 16), int(self.pos[0] / 256 + (self.fog_radius + 1) / 16) + 1):
                     for y in range(int(self.pos[1] / 256 - (self.fog_radius + 1) / 16), int(self.pos[1] / 256 + (self.fog_radius + 1) / 16) + 1):
