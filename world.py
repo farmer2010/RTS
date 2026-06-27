@@ -11,6 +11,8 @@ from players import *
 W = pygame.display.Info().current_w
 H = pygame.display.Info().current_h
 
+font = pygame.font.Font("files/Better VCR 6.1.ttf", 16)
+
 class World(Panel):
     def __init__(self, w=8, h=8):
         Panel.__init__(self, (0, 0, W, H))
@@ -57,6 +59,7 @@ class World(Panel):
         self.fog_minimap.fill((0, 0, 0))
         self.field = [[Air(self, (x, y)) for y in range(self.h)] for x in range(self.w)]
         self.ground_field = [[Air(self, (x, y)) for y in range(self.h)] for x in range(self.w)]
+        self.ore_field = [[None for y in range(self.h)] for x in range(self.w)]
         self.unit_field = [[[] for y in range(self.w)] for x in range(self.h)]
         opensimplex.seed(rand(0, 999999999999))
         for x in range(self.w):
@@ -250,6 +253,16 @@ class World(Panel):
                             set_block(self, blockpos, self.players[self.pl_ind], "iron wall")
                         elif keys[pygame.K_KP9]:
                             set_block(self, blockpos, self.players[self.pl_ind], "stone turret")
+                        elif keys[pygame.K_KP_MULTIPLY]:
+                            set_block(self, blockpos, self.players[self.pl_ind], "drill")
+                        elif keys[pygame.K_KP_DIVIDE]:
+                            self.field[blockpos[0]][blockpos[1]] = ItemVacuum(self, blockpos)
+                        elif keys[pygame.K_INSERT]:
+                            self.ore_field[blockpos[0]][blockpos[1]] = ["stone", 10]
+                        elif keys[pygame.K_HOME]:
+                            self.ore_field[blockpos[0]][blockpos[1]] = ["coal", 10]
+                        elif keys[pygame.K_DELETE]:
+                            self.ore_field[blockpos[0]][blockpos[1]] = None
                         else:
                             set_block(self, blockpos, None, "stone")
                         self.chunks[blockpos[0] // 16][blockpos[1] // 16].update_image()
@@ -408,7 +421,7 @@ class World(Panel):
             if self.test_for_block_pos(blockpos):
                 bl = self.field[blockpos[0]][blockpos[1]]
                 if bl.player == self.player:
-                    if bl.type == "sorter" or bl.type == "inverted sorter":
+                    if bl.type == "sorter" or bl.type == "inverted sorter" or bl.type == "drill":
                         img = pygame.transform.scale(items[bl.config], (16 * self.zoom, 16 * self.zoom))
                         screen.blit(img, self.game_to_display([bl.pos[0] * 16, bl.pos[1] * 16 - 16]))
                     if bl.is_construction:
@@ -417,6 +430,16 @@ class World(Panel):
                     if bl.type == "stone turret":
                         img = pygame.transform.scale(progressbar[int(10 - bl.items / bl.max_items * 10)],(16 * self.zoom, 16 * self.zoom))
                         screen.blit(img, self.game_to_display([bl.pos[0] * 16, bl.pos[1] * 16 + 16]))
+                if (bl.type == "air" or bl.type == "drill") and self.ore_field[blockpos[0]][blockpos[1]] != None:
+                    ore = self.ore_field[blockpos[0]][blockpos[1]]
+                    if ore[0] != "coal":
+                        img = pygame.transform.scale(selection_img, (16 * self.zoom, 16 * self.zoom))
+                        screen.blit(img, self.game_to_display([bl.pos[0] * 16, bl.pos[1] * 16]))
+                        render_text(ore[0] + ": " + str(ore[1]), self.game_to_display([bl.pos[0] * 16, bl.pos[1] * 16]), screen, color=(0, 0, 0), centery="down", font=font)
+                    else:
+                        img = pygame.transform.scale(white_selection_img, (16 * self.zoom, 16 * self.zoom))
+                        screen.blit(img, self.game_to_display([bl.pos[0] * 16, bl.pos[1] * 16]))
+                        render_text(ore[0] + ": " + str(ore[1]), self.game_to_display([bl.pos[0] * 16, bl.pos[1] * 16]), screen, color=(255, 255, 255), centery="down", font=font)
             #
             for obj in self.objects:
                 obj.draw(screen)

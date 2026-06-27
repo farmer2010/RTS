@@ -20,6 +20,13 @@ enemy_edge_img = pygame.image.load("files/images/enemy_edge.png")
 small_turret_img = pygame.image.load("files/images/small_turret.png")
 stone_turret_img = pygame.image.load("files/images/stone_turret.png")
 dense_stone_turret_img = pygame.image.load("files/images/dense_stone_turret.png")
+selection_img = pygame.image.load("files/images/selection.png")
+white_selection_img = pygame.image.load("files/images/white_selection.png")
+
+ore_img = {
+    "stone" : pygame.image.load("files/images/stone_ore.png"),
+    "coal" : pygame.image.load("files/images/coal_ore.png"),
+}
 
 hbbar = [
     pygame.image.load("files/images/hpbar1.png"),
@@ -108,6 +115,11 @@ inverted_sorter_images = {
     "" : pygame.image.load("files/images/inverted_sorter_null.png"),
     "stone" : pygame.image.load("files/images/inverted_sorter_stone.png"),
     "coal" : pygame.image.load("files/images/inverted_sorter_coal.png"),
+}
+drill_images = {
+    "" : pygame.image.load("files/images/drill_null.png"),
+    "stone" : pygame.image.load("files/images/drill_stone.png"),
+    "coal" : pygame.image.load("files/images/drill_coal.png"),
 }
 
 items = {

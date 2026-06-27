@@ -55,6 +55,8 @@ class Chunk():
         img = pygame.Surface((16, 16))
         if self.world.field[pos[0]][pos[1]].type == "air":
             img.blit(self.world.ground_field[pos[0]][pos[1]].get_image(), (0, 0))
+            if self.world.ore_field[pos[0]][pos[1]] != None:
+                img.blit(ore_img[self.world.ore_field[pos[0]][pos[1]][0]], (0, 0))
         img.blit(self.world.field[pos[0]][pos[1]].get_image(), (0, 0))
         if self.world.field[pos[0]][pos[1]].player is self.world.players[1]:
             img.blit(enemy_edge_img, (0, 0))

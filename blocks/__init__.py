@@ -13,6 +13,7 @@ from blocks.gate import *
 from blocks.wall import *
 from blocks.turret import *
 from blocks.stone_floor import *
+from blocks.drill import *
 
 def set_block(world, pos, player, type, rotate=0):
     if world.field[pos[0]][pos[1]].type == "air":
@@ -40,6 +41,8 @@ def set_block(world, pos, player, type, rotate=0):
             world.field[pos[0]][pos[1]] = Wall(world, pos, player, "iron wall")
         elif type == "stone turret":
             world.field[pos[0]][pos[1]] = Turret(world, pos, player, "stone turret")
+        elif type == "drill":
+            world.field[pos[0]][pos[1]] = Drill(world, pos, player, "drill")
         if world.player.fog[pos[0]][pos[1]] == 2:
             world.update_minimap(pos)
         world.chunks[pos[0] // 16][pos[1] // 16].update_image()
