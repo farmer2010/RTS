@@ -79,6 +79,10 @@ class Sorter(Block):
             elif self.config == "iron":
                 self.config = "copper"
             elif self.config == "copper":
+                self.config = "iron bar"
+            elif self.config == "iron bar":
+                self.config = "copper bar"
+            elif self.config == "copper bar":
                 self.config = ""
             elif self.config == "":
                 self.config = "stone"

@@ -1,6 +1,7 @@
 import pygame
 import math
 from textures import *
+from blocks import *
 
 class Chunk():
     def __init__(self, world, pos):
@@ -53,18 +54,23 @@ class Chunk():
 
     def draw_block_image(self, pos):
         img = pygame.Surface((16, 16))
-        if self.world.field[pos[0]][pos[1]].type == "air":
+        bl = self.world.field[pos[0]][pos[1]]
+        if bl.type == "air" or bl.type == "work in progress":
             img.blit(self.world.ground_field[pos[0]][pos[1]].get_image(), (0, 0))
             if self.world.ore_field[pos[0]][pos[1]] != None:
                 img.blit(ore_img[self.world.ore_field[pos[0]][pos[1]][0]], (0, 0))
-        img.blit(self.world.field[pos[0]][pos[1]].get_image(), (0, 0))
-        if self.world.field[pos[0]][pos[1]].player is self.world.players[1]:
+        img.blit(bl.get_image(), (0, 0))
+        if bl.player is self.world.players[1]:
             img.blit(enemy_edge_img, (0, 0))
-        pr = int((1000 - self.world.field[pos[0]][pos[1]].progress) // 170)
-        if pr > 0:
-            img.blit(crack[pr - 1], (0, 0))
-        if self.world.player.task_field[pos[0]][pos[1]] == 1:
+        if bl.type != "work in progress":
+            pr = int((1000 - bl.progress) // 170)
+            if pr > 0:
+                img.blit(crack[pr - 1], (0, 0))
+        ts = self.world.player.task_field[pos[0]][pos[1]]
+        if ts == 1:
             img.blit(dig_img, (0, 0))
+        elif ts != 0:
+            img.blit(get_block_preview(ts[0], rotate=ts[1]))
         return(img)
 
     def redraw_block(self, pos):

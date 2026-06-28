@@ -20,7 +20,7 @@ class Unit(Entity):
         self.reload = reload
         self.target = None
         self.command = None
-        self.player.units.append(self)
+        #self.player.units.append(self)
         self.image.fill((255, 0, 0))
         self.inv_flag = 0#юнит неуязвим?
         self.stop_timer = 0#счетчик шагов, в течение которых юнит не двигался
@@ -39,6 +39,16 @@ class Unit(Entity):
             [1, 0],
             [0, 1],
             [-1, 0]
+        ]
+        self.movelist8 = [
+            (0, -1),
+            (1, -1),
+            (1, 0),
+            (1, 1),
+            (0, 1),
+            (-1, 1),
+            (-1, 0),
+            (-1, -1)
         ]
 
     def update(self, events):
@@ -279,7 +289,6 @@ class Unit(Entity):
         #
         if self in self.player.selected_units:
             self.player.selected_units.remove(self)
-        self.player.units.remove(self)
 
     def move(self, speed, rotate):
         moves = {
@@ -426,7 +435,7 @@ class Unit(Entity):
                 if not (0 <= neighbor[0] < width and 0 <= neighbor[1] < height):
                     continue
                 #для рабочих есть возможность подъехать к закрытой клетке
-                if move_to_close and neighbor[0] == end_pos[0] and neighbor[1] == end_pos[1] and field[neighbor[0]][neighbor[1]].has_hitbox:
+                if move_to_close and neighbor[0] == end_pos[0] and neighbor[1] == end_pos[1]:
                     # Восстанавливаем путь
                     path = []
                     while current in came_from:

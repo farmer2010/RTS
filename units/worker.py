@@ -1,5 +1,5 @@
 from units.unit import *
-from blocks import *
+import blocks
 
 
 class Worker(Unit):
@@ -13,7 +13,7 @@ class Worker(Unit):
         Unit.update(self, events)
         dig = self.dig()
         self.timer += 1
-        if self.timer >= 60:
+        if self.timer >= 30:
             self.timer = 0
             if not dig and self.command == None:
                 if self.task != None:
@@ -22,16 +22,27 @@ class Worker(Unit):
 
     def dig(self):
         pos = [int(self.pos[0] / 16), int(self.pos[1] / 16)]
-        for x in range(pos[0] - 1, pos[0] + 2):
-            for y in range(pos[1] - 1, pos[1] + 2):
-                if self.world.test_for_block_pos((x, y)):
-                    if self.world.field[x][y].can_mined and self.player.task_field[x][y] == 1:
-                        self.world.field[x][y].progress -= self.world.field[x][y].mining_speed
-                        if self.world.field[x][y].progress <= 0:
+        for i in range(8):
+            x, y = pos[0] + self.movelist8[i][0], pos[1] + self.movelist8[i][1]
+            if self.world.test_for_block_pos((x, y)):
+                if self.player.task_field[x][y] == 1:
+                    self.world.field[x][y].progress -= self.world.field[x][y].mining_speed
+                    if self.world.field[x][y].progress <= 0:
+                        self.player.task_field[x][y] = 0
+                        self.world.field[x][y].remove_block()
+                    self.world.chunks[int(x // 16)][int(y // 16)].image_changes = 1
+                    return(1)
+                elif self.player.task_field[x][y] != 0:
+                    if self.world.field[x][y].type == "air":
+                        self.world.field[x][y] = blocks.WorkInProgress(self.world, (x, y))
+                    elif self.world.field[x][y].type == "work in progress":
+                        self.world.field[x][y].progress += 1
+                        print(blocks.build_time[self.player.task_field[x][y][0]], self.world.field[x][y].progress, self.player.task_field[x][y])
+                        if self.world.field[x][y].progress >= blocks.build_time[self.player.task_field[x][y][0]]:
+                            blocks.set_block(self.world, (x, y), self.player, self.player.task_field[x][y][0], self.player.task_field[x][y][1])
                             self.player.task_field[x][y] = 0
-                            self.world.field[x][y].remove_block()
-                        self.world.chunks[int(x // 16)][int(y // 16)].image_changes = 1
-                        return(1)
+                            self.world.chunks[int(x // 16)][int(y // 16)].image_changes = 1
+                    return(1)
         return(0)
 
     def update_task(self):

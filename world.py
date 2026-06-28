@@ -311,8 +311,9 @@ class World(Panel):
                             self.ore_field[blockpos[0]][blockpos[1]] = ["copper", 10]
                         elif keys[pygame.K_DELETE]:
                             self.ore_field[blockpos[0]][blockpos[1]] = None
-                        else:
-                            set_block(self, blockpos, pl, tp, rotate=self.select_rotate)
+                        elif self.select_block != None:
+                            #set_block(self, blockpos, pl, tp, rotate=self.select_rotate)
+                            self.player.task_field[blockpos[0]][blockpos[1]] = [self.select_block, self.select_rotate]
                         self.chunks[blockpos[0] // 16][blockpos[1] // 16].update_image()
             #
             if pygame.mouse.get_pressed()[2] and not on_ui:#ломание
@@ -428,11 +429,13 @@ class World(Panel):
         #
         for x in range(bl_corn_pos[0], bl_corn_pos2[0] + 1):
             for y in range(bl_corn_pos[1], bl_corn_pos2[1] + 1):
-                if self.test_for_block_pos((x, y)) and self.field[x][y].can_mined:
+                if self.test_for_block_pos((x, y)):
+                    if self.action_type == "clear":
+                        self.player.task_field[x][y] = 0
+                        if self.field[x][y].type == "work in progress":
+                            self.field[x][y] = Air(self, (x, y))
                     if self.action_type == "dig":
                         self.player.task_field[x][y] = 1
-                    elif self.action_type == "clear":
-                        self.player.task_field[x][y] = 0
         #
         if self.action_type == "clear" or self.action_type == "dig":
             for x in range(int(bl_corn_pos[0] // 16), int(bl_corn_pos2[0] // 16 + 1)):
@@ -499,10 +502,10 @@ class World(Panel):
             for obj in self.objects:
                 obj.draw(screen)
             #
-            '''for x in range(int(self.cam_pos[0] / 256 - count[0] / 2), int(self.cam_pos[0] / 256 + count[0] / 2) + 1):#туман войны
+            for x in range(int(self.cam_pos[0] / 256 - count[0] / 2), int(self.cam_pos[0] / 256 + count[0] / 2) + 1):#туман войны
                 for y in range(int(self.cam_pos[1] / 256 - count[1] / 2), int(self.cam_pos[1] / 256 + count[1] / 2) + 1):
                     if x >= 0 and x < self.ch_w and y >= 0 and y < self.ch_h:
-                        screen.blit(self.chunks[x][y].scaled_fog_image, self.game_to_display((x * 256, y * 256)))'''
+                        screen.blit(self.chunks[x][y].scaled_fog_image, self.game_to_display((x * 256, y * 256)))
             #
             if self.action_type != None:
                 pos = self.game_to_display(self.action_pos)
@@ -566,7 +569,8 @@ class World(Panel):
             #
             if self.test_for_block_pos(blockpos) and self.select_block != None and self.field[blockpos[0]][blockpos[1]].type == "air":
                 if self.player.fog[blockpos[0]][blockpos[1]] != 0:
-                    screen.blit(get_block_preview(self.select_block, rotate=self.select_rotate, zoom=self.zoom), self.game_to_display((blockpos[0] * 16, blockpos[1] * 16)))
+                    img = get_block_preview(self.select_block, rotate=self.select_rotate)
+                    screen.blit(pygame.transform.scale(img, (16 * self.zoom, 16 * self.zoom)), self.game_to_display((blockpos[0] * 16, blockpos[1] * 16)))
             #
             utils.render_text(str(self.zoom), (0, 25), screen, color=(255, 0, 0))
             utils.render_text(str(d), (0, 50), screen, color=(255, 0, 0))
@@ -582,7 +586,10 @@ class World(Panel):
                     int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) // (16 * self.zoom)),
                     int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) // (16 * self.zoom))
                 ]
-                utils.render_text(str(blockpos), mousepos, screen, color=(255, 0, 0))
+                if self.test_for_block_pos(blockpos):
+                    utils.render_text(str(blockpos) + ", " + self.field[blockpos[0]][blockpos[1]].type, mousepos, screen, color=(255, 0, 0))
+                else:
+                    utils.render_text(str(blockpos), mousepos, screen, color=(255, 0, 0))
         elif self.menu == "map":
             mpos = [
                 (self.map_pos[0] - self.w) * self.map_zoom + W / 2,

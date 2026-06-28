@@ -6,7 +6,6 @@ class FactoryUnit():
         self.block = block
 
     def update(self, events):
-        print(self.block.items)
         if self.block.items[self.block.recipe["result"][0]] > 0 and self.block.item == None:
             itm = [self.block.recipe["result"][0], self.block]
             self.block.item = itm
