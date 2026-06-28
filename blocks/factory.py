@@ -8,25 +8,35 @@ class Factory(Block):
         Block.__init__(self, world, type, pos, player=player)
         self.item = None
         self.timer = 0
-        self.items = 0
+        self.items = {}
         if self.type == "iron furnace":
             self.image = iron_furnace_img
             self.recipe = {
-                "cost" : {
-                    "iron" : 1,
-                    "coal" : 1
-                },
-                "result" : {"iron bar" : 1}
+                "cost": [
+                    ["iron", 1],
+                    ["coal", 1]
+                ],
+                "result": ["iron bar", 1]
+            }
+            self.items = {
+                "iron" : 0,
+                "coal" : 0,
+                "iron bar" : 0
             }
             self.production_time = 90
         elif self.type == "copper furnace":
             self.image = copper_furnace_img
             self.recipe = {
-                "cost": {
-                    "copper": 1,
-                    "coal": 1
-                },
-                "result": {"copper bar": 1}
+                "cost": [
+                    ["copper", 1],
+                    ["coal", 1]
+                ],
+                "result": ["copper bar", 1]
+            }
+            self.items = {
+                "copper": 0,
+                "coal": 0,
+                "copper bar": 0
             }
             self.production_time = 90
         self.has_hitbox = True
@@ -43,8 +53,9 @@ class Factory(Block):
         self.world.objects.append(self.unit)
 
     def set_item(self, item, rotate=0):
-        if self.item == None:
-            self.item = item
+        if item[0] in self.items and self.items[item[0]] < 20:
+            self.items[item[0]] += 1
+            self.world.items.remove(item)
             return(1)
         return(0)
 
@@ -73,4 +84,7 @@ class Factory(Block):
             self.world.items.remove(self.item)
 
     def is_connect_conveyor(self, rotate):
+        return(True)
+
+    def can_take_item(self, rotate):
         return(True)

@@ -5,6 +5,7 @@ import pygame
 камень - #636363
 уголь - #1e1e1e
 железная руда - 238 195 154
+слиток меди - 208 95 34
 '''
 
 stone_img = pygame.image.load("files/images/stone.png")
@@ -23,8 +24,8 @@ stone_turret_img = pygame.image.load("files/images/stone_turret.png")
 dense_stone_turret_img = pygame.image.load("files/images/dense_stone_turret.png")
 selection_img = pygame.image.load("files/images/selection.png")
 white_selection_img = pygame.image.load("files/images/white_selection.png")
-iron_furnace_img = pygame.image.load("files/images/iron_furnace.png.png")
-copper_furnace_img = pygame.image.load("files/images/copper_furnace.png.png")
+iron_furnace_img = pygame.image.load("files/images/iron_furnace.png")
+copper_furnace_img = pygame.image.load("files/images/copper_furnace.png")
 
 hbbar = [
     pygame.image.load("files/images/hpbar1.png"),
@@ -110,6 +111,8 @@ sorter_images = {
     "coal" : pygame.image.load("files/images/sorter_coal.png"),
     "iron": pygame.image.load("files/images/sorter_iron.png"),
     "copper": pygame.image.load("files/images/sorter_copper.png"),
+    "iron bar": pygame.image.load("files/images/sorter_iron_bar.png"),
+    "copper bar": pygame.image.load("files/images/sorter_copper_bar.png"),
 }
 inverted_sorter_images = {
     "" : pygame.image.load("files/images/inverted_sorter_null.png"),
@@ -117,6 +120,8 @@ inverted_sorter_images = {
     "coal" : pygame.image.load("files/images/inverted_sorter_coal.png"),
     "iron": pygame.image.load("files/images/inverted_sorter_iron.png"),
     "copper": pygame.image.load("files/images/inverted_sorter_copper.png"),
+    "iron bar": pygame.image.load("files/images/inverted_sorter_iron_bar.png"),
+    "copper bar": pygame.image.load("files/images/inverted_sorter_copper_bar.png"),
 }
 drill_images = {
     "" : pygame.image.load("files/images/drill_null.png"),
