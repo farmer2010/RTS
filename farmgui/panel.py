@@ -15,32 +15,33 @@ class Panel(Component):
         self.is_panel = 1
 
     def update_component(self, events):
-        if self.is_main and self.first_upd:#если главная панель запускается в первый раз, то она определяет абсолютную позицию у всех дочерних компонентов
-            self.first_upd = 0
-            self.set_absolute_pos()
-        self.update(events)
-        mousedown = pygame.mouse.get_pressed()[0]
-        mouse_collide = self.collide()
-        if mouse_collide:
-            if mousedown:
-                if self.input_manager.mousetag_object[0] == None:
-                    press_button = 0
-                    for b in self.buttons:
-                        m_c = b.collide()
-                        press_button = m_c
-                        if m_c:
-                            break
-                    if not press_button:
-                        self.input_manager.mousetag_object[0] = self
+        if self.visible:
+            if self.is_main and self.first_upd:#если главная панель запускается в первый раз, то она определяет абсолютную позицию у всех дочерних компонентов
+                self.first_upd = 0
+                self.set_absolute_pos()
+            self.update(events)
+            mousedown = pygame.mouse.get_pressed()[0]
+            mouse_collide = self.collide()
+            if mouse_collide:
+                if mousedown:
+                    if self.input_manager.mousetag_object[0] == None:
+                        press_button = 0
+                        for b in self.buttons:
+                            m_c = b.collide()
+                            press_button = m_c
+                            if m_c:
+                                break
+                        if not press_button:
+                            self.input_manager.mousetag_object[0] = self
+                else:
+                    if self.input_manager.mousetag_object[0] == self:
+                        self.input_manager.mousetag_object[0] = None
             else:
-                if self.input_manager.mousetag_object[0] == self:
-                    self.input_manager.mousetag_object[0] = None
-        else:
-            if not mousedown:
-                if self.input_manager.mousetag_object[0] == self:
-                    self.input_manager.mousetag_object[0] = None
-        for b in self.buttons:
-            b.update_component(events)
+                if not mousedown:
+                    if self.input_manager.mousetag_object[0] == self:
+                        self.input_manager.mousetag_object[0] = None
+            for b in self.buttons:
+                b.update_component(events)
 
     def draw(self, screen):
         self.image.blit(self.background_image, (0, 0))

@@ -14,22 +14,27 @@ class Component():
         self.rect.y -= self.rect.h * self.center[1]
         self.absolute_pos = [0, 0]
         self.is_panel = 0
+        self.visible = 1
 
     def update_component(self, events):
-        self.update(events)
-        mousedown = pygame.mouse.get_pressed()[0]
-        mouse_collide = self.collide()
-        if mouse_collide:
-            if mousedown:
-                if self.input_manager.mousetag_object[0] == None:
-                    self.input_manager.mousetag_object[0] = self
+        if self.visible:
+            self.update(events)
+            mousedown = pygame.mouse.get_pressed()[0]
+            mouse_collide = self.collide()
+            if mouse_collide:
+                if mousedown:
+                    if self.input_manager.mousetag_object[0] == None:
+                        self.input_manager.mousetag_object[0] = self
+                else:
+                    if self.input_manager.mousetag_object[0] == self:
+                        self.input_manager.mousetag_object[0] = None
             else:
-                if self.input_manager.mousetag_object[0] == self:
-                    self.input_manager.mousetag_object[0] = None
-        else:
-            if not mousedown:
-                if self.input_manager.mousetag_object[0] == self:
-                    self.input_manager.mousetag_object[0] = None
+                if not mousedown:
+                    if self.input_manager.mousetag_object[0] == self:
+                        self.input_manager.mousetag_object[0] = None
+
+    def set_visible(self, v):
+        self.visible = v
 
     def get_mousepos(self):
         mousepos = pygame.mouse.get_pos()
