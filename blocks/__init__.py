@@ -14,6 +14,7 @@ from blocks.wall import *
 from blocks.turret import *
 from blocks.stone_floor import *
 from blocks.drill import *
+from blocks.factory import *
 
 def set_block(world, pos, player, type, rotate=0):
     if world.field[pos[0]][pos[1]].type == "air":
@@ -43,6 +44,10 @@ def set_block(world, pos, player, type, rotate=0):
             world.field[pos[0]][pos[1]] = Turret(world, pos, player, "stone turret")
         elif type == "drill":
             world.field[pos[0]][pos[1]] = Drill(world, pos, player, "drill")
+        elif type == "iron furnace":
+            world.field[pos[0]][pos[1]] = Factory(world, pos, player, "iron furnace")
+        elif type == "copper furnace":
+            world.field[pos[0]][pos[1]] = Factory(world, pos, player, "copper furnace")
         if world.player.fog[pos[0]][pos[1]] == 2:
             world.update_minimap(pos)
         world.chunks[pos[0] // 16][pos[1] // 16].update_image()

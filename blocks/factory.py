@@ -1,26 +1,34 @@
 from blocks.block import Block
 from textures import *
 from random import randint as rand
-from units import *
+from units.factory_unit import *
 
-class Drill(Block):
-    def __init__(self, world, pos, player, type="drill"):
+class Factory(Block):
+    def __init__(self, world, pos, player, type="iron furnace"):
         Block.__init__(self, world, type, pos, player=player)
         self.item = None
-        self.config = ""
         self.timer = 0
         self.items = 0
-        ore = self.world.ore_field[self.pos[0]][self.pos[1]]
-        if ore != None:
-            self.config = ore[0]
-        if self.type == "drill":
-            self.mine_speed = {
-                "stone" : 120,
-                "coal" : 180,
-                "iron" : 240,
-                "copper" : 210,
+        if self.type == "iron furnace":
+            self.image = iron_furnace_img
+            self.recipe = {
+                "cost" : {
+                    "iron" : 1,
+                    "coal" : 1
+                },
+                "result" : {"iron bar" : 1}
             }
-        self.image = router_img
+            self.production_time = 90
+        elif self.type == "copper furnace":
+            self.image = copper_furnace_img
+            self.recipe = {
+                "cost": {
+                    "copper": 1,
+                    "coal": 1
+                },
+                "result": {"copper bar": 1}
+            }
+            self.production_time = 90
         self.has_hitbox = True
         self.movelist = [
             [0, -1],
@@ -31,7 +39,7 @@ class Drill(Block):
         self.is_conveyor = 1
         self.index = 0
         self.is_construction = 1
-        self.unit = DrillUnit(self.world, self.player, self)
+        self.unit = FactoryUnit(self.world, self.player, self)
         self.world.objects.append(self.unit)
 
     def set_item(self, item, rotate=0):
@@ -66,10 +74,3 @@ class Drill(Block):
 
     def is_connect_conveyor(self, rotate):
         return(True)
-
-    def get_image(self):
-        ore = self.world.ore_field[self.pos[0]][self.pos[1]]
-        if ore != None:
-            return (drill_images[ore[0]])
-        else:
-            return(drill_images[""])
