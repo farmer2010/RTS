@@ -18,6 +18,7 @@ class Worker(Unit):
             if not dig and self.command == None:
                 if self.task != None:
                     self.player.task_units[self.task[0]][self.task[1]] = None
+                    self.task = None
                 self.update_task()
 
     def dig(self):
@@ -37,7 +38,6 @@ class Worker(Unit):
                         self.world.field[x][y] = blocks.WorkInProgress(self.world, (x, y))
                     elif self.world.field[x][y].type == "work in progress":
                         self.world.field[x][y].progress += 1
-                        print(blocks.build_time[self.player.task_field[x][y][0]], self.world.field[x][y].progress, self.player.task_field[x][y])
                         if self.world.field[x][y].progress >= blocks.build_time[self.player.task_field[x][y][0]]:
                             blocks.set_block(self.world, (x, y), self.player, self.player.task_field[x][y][0], self.player.task_field[x][y][1])
                             self.player.task_field[x][y] = 0
@@ -54,7 +54,7 @@ class Worker(Unit):
             [0, 1],
             [-1, 0]
         ]
-
+        #
         x, y = int(self.pos[0] // 16), int(self.pos[1] // 16)
         rotate = 0
         length = 1
@@ -72,9 +72,10 @@ class Worker(Unit):
                         f3 = self.world.test_for_block_pos((x - 1, y)) and not self.world.field[x - 1][y].has_hitbox
                         f4 = self.world.test_for_block_pos((x + 1, y)) and not self.world.field[x + 1][y].has_hitbox
                         if f1 or f2 or f3 or f4:
-                            self.world.player.task_units[x][y] = self
                             self.move_command((x, y), move_to_close=1)
                             if self.command != None:
+                                self.world.player.task_units[x][y] = self
+                                self.task = (x, y)
                                 return
                 #
             if i % 2 == 1:

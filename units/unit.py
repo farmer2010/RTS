@@ -143,6 +143,9 @@ class Unit(Entity):
         #
         #РАСТАЛКИВАНИЕ
         #
+        self.update_unit_field("remove")
+        old_pos = [int(self.pos[0] // 16), int(self.pos[1] // 16)]
+        #
         collide = self.collide(0, 0)
         coll_obj = collide[3]
         if collide[0]:
@@ -174,6 +177,54 @@ class Unit(Entity):
                             self.pos[1] = collide_y[2] - self.h / 2
                         elif dy < 0.01:
                             self.pos[1] = collide_y[2] + self.h / 2
+        #
+        self.update_unit_field("add")
+        #
+        #ТУМАН ВОЙНЫ
+        #
+        moves = {
+            (0, -1): 0,
+            (1, -1): 1,
+            (1, 0): 2,
+            (1, 1): 3,
+            (0, 1): 4,
+            (-1, 1): 5,
+            (-1, 0): 6,
+            (-1, -1): 7
+        }
+        #
+        new_pos = [int(self.pos[0] // 16), int(self.pos[1] // 16)]
+        if self.player == self.world.player:
+            if new_pos != old_pos:
+                rotate = moves[(new_pos[0] - old_pos[0], new_pos[1] - old_pos[1])]
+                for p in self.fog_presets[rotate][1]:
+                    npos = [old_pos[0] + p[0], old_pos[1] + p[1]]
+                    if self.world.test_for_block_pos(npos):
+                        if self in self.player.fog_units[npos[0]][npos[1]]:
+                            self.player.fog_units[npos[0]][npos[1]].remove(self)
+                            if len(self.player.fog_units[npos[0]][npos[1]]) == 0:
+                                self.player.fog[npos[0]][npos[1]] = 1
+                                self.world.chunks[int(npos[0] // 16)][int(npos[1] // 16)].fog_blocks[npos[0] % 16][
+                                    npos[1] % 16].blit(self.world.ground_field[npos[0]][npos[1]].get_image())
+                                self.world.chunks[int(npos[0] // 16)][int(npos[1] // 16)].fog_blocks[npos[0] % 16][
+                                    npos[1] % 16].blit(self.world.field[npos[0]][npos[1]].get_image())
+                                self.world.update_fog_minimap(npos)
+                #
+                for p in self.fog_presets[rotate][0]:
+                    npos = [new_pos[0] + p[0], new_pos[1] + p[1]]
+                    if self.world.test_for_block_pos(npos):
+                        if self not in self.player.fog_units[npos[0]][npos[1]]:
+                            self.player.fog_units[npos[0]][npos[1]].append(self)
+                        if len(self.player.fog_units[npos[0]][npos[1]]) == 1:
+                            self.player.fog[npos[0]][npos[1]] = 2
+                            self.world.update_fog_minimap(npos)
+                #
+                for x in range(int(self.pos[0] / 256 - (self.fog_radius + 1) / 16),
+                               int(self.pos[0] / 256 + (self.fog_radius + 1) / 16) + 1):
+                    for y in range(int(self.pos[1] / 256 - (self.fog_radius + 1) / 16),
+                                   int(self.pos[1] / 256 + (self.fog_radius + 1) / 16) + 1):
+                        if x >= 0 and x < self.world.ch_w and y >= 0 and y < self.world.ch_h:
+                            self.world.chunks[x][y].fog_changes = 1
 
     def move_command(self, pos, move_to_close=0):
         if self.world.test_for_block_pos(pos):
@@ -319,8 +370,10 @@ class Unit(Entity):
                             self.player.fog_units[npos[0]][npos[1]].remove(self)
                             if len(self.player.fog_units[npos[0]][npos[1]]) == 0:
                                 self.player.fog[npos[0]][npos[1]] = 1
-                                self.world.chunks[int(npos[0] // 16)][int(npos[1] // 16)].fog_blocks[npos[0] % 16][npos[1] % 16].blit(self.world.ground_field[npos[0]][npos[1]].get_image())
-                                self.world.chunks[int(npos[0] // 16)][int(npos[1] // 16)].fog_blocks[npos[0] % 16][npos[1] % 16].blit(self.world.field[npos[0]][npos[1]].get_image())
+                                self.world.chunks[int(npos[0] // 16)][int(npos[1] // 16)].fog_blocks[npos[0] % 16][
+                                    npos[1] % 16].blit(self.world.ground_field[npos[0]][npos[1]].get_image())
+                                self.world.chunks[int(npos[0] // 16)][int(npos[1] // 16)].fog_blocks[npos[0] % 16][
+                                    npos[1] % 16].blit(self.world.field[npos[0]][npos[1]].get_image())
                                 self.world.update_fog_minimap(npos)
                 #
                 for p in self.fog_presets[rotate][0]:
@@ -332,12 +385,14 @@ class Unit(Entity):
                             self.player.fog[npos[0]][npos[1]] = 2
                             self.world.update_fog_minimap(npos)
                 #
-                for x in range(int(self.pos[0] / 256 - (self.fog_radius + 1) / 16), int(self.pos[0] / 256 + (self.fog_radius + 1) / 16) + 1):
-                    for y in range(int(self.pos[1] / 256 - (self.fog_radius + 1) / 16), int(self.pos[1] / 256 + (self.fog_radius + 1) / 16) + 1):
+                for x in range(int(self.pos[0] / 256 - (self.fog_radius + 1) / 16),
+                               int(self.pos[0] / 256 + (self.fog_radius + 1) / 16) + 1):
+                    for y in range(int(self.pos[1] / 256 - (self.fog_radius + 1) / 16),
+                                   int(self.pos[1] / 256 + (self.fog_radius + 1) / 16) + 1):
                         if x >= 0 and x < self.world.ch_w and y >= 0 and y < self.world.ch_h:
                             self.world.chunks[x][y].fog_changes = 1
         self.update_unit_field("add")
-        return(mov)
+        return (mov)
 
     def move_path(self):
         if self.path_index < len(self.path):

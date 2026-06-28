@@ -17,11 +17,6 @@ font = pygame.font.Font("files/Better VCR 6.1.ttf", 16)
 
 pages = [
     [
-        "stone turret",
-        "stone wall",
-        "iron wall"
-    ],
-    [
         "conveyor",
         "junction",
         "router",
@@ -36,6 +31,11 @@ pages = [
     [
         "iron furnace",
         "copper furnace"
+    ],
+    [
+        "stone turret",
+        "stone wall",
+        "iron wall"
     ],
     [
 
@@ -221,17 +221,25 @@ class World(Panel):
                         self.pause = not self.pause
                     if self.action_type == None:
                         if event.key == pygame.K_f:
+                            self.select_block = None
                             self.action_pos = self.display_to_game(mousepos)
                             self.action_type = "units"
                         if event.key == pygame.K_g:
+                            self.select_block = None
                             self.action_pos = self.display_to_game(mousepos)
                             self.action_type = "dig"
                         if event.key == pygame.K_c:
+                            self.select_block = None
                             self.action_pos = self.display_to_game(mousepos)
                             self.action_type = "clear"
+                        if event.key == pygame.K_x:
+                            self.select_block = None
+                            self.action_pos = self.display_to_game(mousepos)
+                            self.action_type = "remove"
                     if event.key == pygame.K_r:
                         self.select_rotate = (self.select_rotate + 1) % 4
                     if event.key == pygame.K_m:
+                        self.select_block = None
                         self.menu = "map"
                     if event.key == pygame.K_q:
                         blockpos = [
@@ -251,20 +259,22 @@ class World(Panel):
                         self.action_func()
                     if event.key == pygame.K_c and self.action_type == "clear":
                         self.action_func()
+                    if event.key == pygame.K_x and self.action_type == "remove":
+                        self.action_func()
                 #
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
                         if not on_ui:
                             if keys[pygame.K_LSHIFT]:#команда юнитам
-                                for obj in self.objects:
-                                    if obj._class == "unit" and obj.player == self.player and obj in self.player.selected_units:
-                                        mousepos = pygame.mouse.get_pos()
-                                        pos = [
-                                            int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) / self.zoom / 16),
-                                            int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) / self.zoom / 16)
-                                        ]
-                                        obj.move_command(pos)
-                                self.command_index += 1
+                                pos = [
+                                    int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) / self.zoom / 16),
+                                    int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) / self.zoom / 16)
+                                ]
+                                if self.test_for_block_pos(pos):
+                                    if self.player.fog[pos[0]][pos[1]] != 0:
+                                        for obj in self.player.selected_units:
+                                            obj.move_command(pos)
+                                        self.command_index += 1
                             else:#нажатие на блок
                                 blockpos = [
                                     int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) // (16 * self.zoom)),
@@ -274,6 +284,10 @@ class World(Panel):
                                     if self.field[blockpos[0]][blockpos[1]].type != "air":
                                         self.field[blockpos[0]][blockpos[1]].action()
                                         self.chunks[blockpos[0] // 16][blockpos[1] // 16].update_image()
+                    if event.button == 3:
+                        self.action_type = "remove all"
+                        self.select_block = None
+                        self.action_pos = self.display_to_game(mousepos)
                 if event.type == MOUSEBUTTONUP:
                     if event.button == 1:
                         if inv:
@@ -289,6 +303,8 @@ class World(Panel):
                         #
                         if mnmp:
                             self.menu = "map"
+                    if event.button == 3 and self.action_type == "remove all":
+                        self.action_func()
             #
             if pygame.mouse.get_pressed()[0] and not keys[pygame.K_LSHIFT] and not on_ui:#установка
                 blockpos = [
@@ -316,16 +332,14 @@ class World(Panel):
                             self.player.task_field[blockpos[0]][blockpos[1]] = [self.select_block, self.select_rotate]
                         self.chunks[blockpos[0] // 16][blockpos[1] // 16].update_image()
             #
-            if pygame.mouse.get_pressed()[2] and not on_ui:#ломание
-                self.action_type = None
-                self.select_block = None
+            '''if pygame.mouse.get_pressed()[2] and not on_ui and 0:#ломание
                 blockpos = [
                     int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) // (16 * self.zoom)),
                     int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) // (16 * self.zoom))
                 ]
                 if self.test_for_block_pos(blockpos):
                     if self.field[blockpos[0]][blockpos[1]].type != "air":
-                        self.field[blockpos[0]][blockpos[1]].remove_block()
+                        self.field[blockpos[0]][blockpos[1]].remove_block()'''
             #
             #ОБНОВЛЕНИЕ
             #
@@ -430,14 +444,25 @@ class World(Panel):
         for x in range(bl_corn_pos[0], bl_corn_pos2[0] + 1):
             for y in range(bl_corn_pos[1], bl_corn_pos2[1] + 1):
                 if self.test_for_block_pos((x, y)):
-                    if self.action_type == "clear":
-                        self.player.task_field[x][y] = 0
-                        if self.field[x][y].type == "work in progress":
-                            self.field[x][y] = Air(self, (x, y))
-                    if self.action_type == "dig":
-                        self.player.task_field[x][y] = 1
+                    if self.player.fog[x][y] != 0:
+                        if self.action_type == "clear":
+                            self.player.task_field[x][y] = 0
+                            if self.field[x][y].type == "work in progress":
+                                self.field[x][y] = Air(self, (x, y))
+                        if self.action_type == "dig":
+                            if self.field[x][y].can_mined:
+                                self.player.task_field[x][y] = 1
+                        if self.action_type == "remove":
+                            if self.field[x][y].player == self.player and self.field[x][y].is_construction:
+                                self.player.task_field[x][y] = 1
+                        if self.action_type == "remove all":
+                            self.player.task_field[x][y] = 0
+                            if self.field[x][y].type == "work in progress":
+                                self.field[x][y] = Air(self, (x, y))
+                            if (self.field[x][y].is_construction and self.field[x][y].player == self.player) or self.field[x][y].can_mined:
+                                self.player.task_field[x][y] = 1
         #
-        if self.action_type == "clear" or self.action_type == "dig":
+        if self.action_type != "units":
             for x in range(int(bl_corn_pos[0] // 16), int(bl_corn_pos2[0] // 16 + 1)):
                 for y in range(int(bl_corn_pos[1] // 16), int(bl_corn_pos2[1] // 16 + 1)):
                     if x >= 0 and x < self.ch_w and y >= 0 and y < self.ch_h:
@@ -511,7 +536,7 @@ class World(Panel):
                 pos = self.game_to_display(self.action_pos)
                 mpos = self.display_to_game(mousepos)
                 img = pygame.Surface((abs(mousepos[0] - pos[0]), abs(mousepos[1] - pos[1])), pygame.SRCALPHA)
-                if self.action_type == "clear" or self.action_type == "dig":
+                if self.action_type != "units":
                     corn_pos = [  # позиция левого верхнего угла выделения
                         min(mpos[0], self.action_pos[0]) // 16 * 16,
                         min(mpos[1], self.action_pos[1]) // 16 * 16
@@ -526,7 +551,7 @@ class World(Panel):
                 #
                 if self.action_type == "units":
                     img.fill((255, 128, 0, 128))
-                elif self.action_type == "dig":
+                elif self.action_type == "dig" or self.action_type == "remove" or self.action_type == "remove all":
                     img.fill((255, 0, 0, 100))
                 elif self.action_type == "clear":
                     img.fill((0, 100, 255, 100))
@@ -534,10 +559,15 @@ class World(Panel):
                 if self.action_type == "units":
                     screen.blit(img, (min(pos[0], mousepos[0]),
                                       min(pos[1], mousepos[1])))
-                elif self.action_type == "clear" or self.action_type == "dig":
+                else:
                     corn_pos = self.game_to_display([min(mpos[0], self.action_pos[0]) // 16 * 16, min(mpos[1], self.action_pos[1]) // 16 * 16])
                     screen.blit(img, (min(pos[0], corn_pos[0]),
                                       min(pos[1], corn_pos[1])))
+            #
+            if self.test_for_block_pos(blockpos) and self.select_block != None and self.field[blockpos[0]][blockpos[1]].type == "air":
+                if self.player.fog[blockpos[0]][blockpos[1]] != 0:
+                    img = get_block_preview(self.select_block, rotate=self.select_rotate)
+                    screen.blit(pygame.transform.scale(img, (16 * self.zoom, 16 * self.zoom)), self.game_to_display((blockpos[0] * 16, blockpos[1] * 16)))
             #
             screen.blit(self.minimap_background, (W - self.w - 18, 0))
             screen.blit(self.minimap, (self.display_W - self.w - 9, 9))
@@ -553,10 +583,10 @@ class World(Panel):
             #
             screen.blit(inventory_background, (W - 268, H - 332))
             #pygame.draw.rect(screen, (90, 90, 90), (W - 320, H - 256, 320, 256))
-            screen.blit(inventory_turret_img, (W - 64 - 6, H - 320 - 6))
-            screen.blit(inventory_conveyor_img, (W - 64 - 6, H - 256 - 6))
-            screen.blit(inventory_drill_img, (W - 64 - 6, H - 192 - 6))
-            screen.blit(inventory_factory_img, (W - 64 - 6, H - 128 - 6))
+            screen.blit(inventory_conveyor_img, (W - 64 - 6, H - 320 - 6))
+            screen.blit(inventory_drill_img, (W - 64 - 6, H - 256 - 6))
+            screen.blit(inventory_factory_img, (W - 64 - 6, H - 192 - 6))
+            screen.blit(inventory_turret_img, (W - 64 - 6, H - 128 - 6))
             screen.blit(inventory_unit_img, (W - 64 - 6, H - 64 - 6))
             screen.blit(inventory_selection, (W - 64 - 6, H - 64 * (5 - self.page_index) - 6))
             for i in range(len(pages[self.page_index])):
@@ -566,11 +596,6 @@ class World(Panel):
                 screen.blit(get_block_image(bl), (x, y))
                 if self.select_block == bl:
                     screen.blit(inventory_selection, (x - 8, y - 8))
-            #
-            if self.test_for_block_pos(blockpos) and self.select_block != None and self.field[blockpos[0]][blockpos[1]].type == "air":
-                if self.player.fog[blockpos[0]][blockpos[1]] != 0:
-                    img = get_block_preview(self.select_block, rotate=self.select_rotate)
-                    screen.blit(pygame.transform.scale(img, (16 * self.zoom, 16 * self.zoom)), self.game_to_display((blockpos[0] * 16, blockpos[1] * 16)))
             #
             utils.render_text(str(self.zoom), (0, 25), screen, color=(255, 0, 0))
             utils.render_text(str(d), (0, 50), screen, color=(255, 0, 0))
