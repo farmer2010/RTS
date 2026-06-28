@@ -255,12 +255,20 @@ class World(Panel):
                             set_block(self, blockpos, self.players[self.pl_ind], "stone turret")
                         elif keys[pygame.K_KP_MULTIPLY]:
                             set_block(self, blockpos, self.players[self.pl_ind], "drill")
+                        elif keys[pygame.K_KP_MINUS]:
+                            set_block(self, blockpos, self.players[self.pl_ind], "iron furnace")
+                        elif keys[pygame.K_KP_PLUS]:
+                            set_block(self, blockpos, self.players[self.pl_ind], "copper furnace")
                         elif keys[pygame.K_KP_DIVIDE]:
                             self.field[blockpos[0]][blockpos[1]] = ItemVacuum(self, blockpos)
                         elif keys[pygame.K_INSERT]:
                             self.ore_field[blockpos[0]][blockpos[1]] = ["stone", 10]
                         elif keys[pygame.K_HOME]:
                             self.ore_field[blockpos[0]][blockpos[1]] = ["coal", 10]
+                        elif keys[pygame.K_PAGEUP]:
+                            self.ore_field[blockpos[0]][blockpos[1]] = ["iron", 10]
+                        elif keys[pygame.K_PAGEDOWN]:
+                            self.ore_field[blockpos[0]][blockpos[1]] = ["copper", 10]
                         elif keys[pygame.K_DELETE]:
                             self.ore_field[blockpos[0]][blockpos[1]] = None
                         else:

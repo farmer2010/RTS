@@ -4,6 +4,7 @@ import pygame
 цвета предметов:
 камень - #636363
 уголь - #1e1e1e
+железная руда - 238 195 154
 '''
 
 stone_img = pygame.image.load("files/images/stone.png")
@@ -22,11 +23,8 @@ stone_turret_img = pygame.image.load("files/images/stone_turret.png")
 dense_stone_turret_img = pygame.image.load("files/images/dense_stone_turret.png")
 selection_img = pygame.image.load("files/images/selection.png")
 white_selection_img = pygame.image.load("files/images/white_selection.png")
-
-ore_img = {
-    "stone" : pygame.image.load("files/images/stone_ore.png"),
-    "coal" : pygame.image.load("files/images/coal_ore.png"),
-}
+iron_furnace_img = pygame.image.load("files/images/iron_furnace.png.png")
+copper_furnace_img = pygame.image.load("files/images/copper_furnace.png.png")
 
 hbbar = [
     pygame.image.load("files/images/hpbar1.png"),
@@ -110,22 +108,37 @@ sorter_images = {
     "" : pygame.image.load("files/images/sorter_null.png"),#не выбран предмет
     "stone" : pygame.image.load("files/images/sorter_stone.png"),
     "coal" : pygame.image.load("files/images/sorter_coal.png"),
+    "iron": pygame.image.load("files/images/sorter_iron.png"),
+    "copper": pygame.image.load("files/images/sorter_copper.png"),
 }
 inverted_sorter_images = {
     "" : pygame.image.load("files/images/inverted_sorter_null.png"),
     "stone" : pygame.image.load("files/images/inverted_sorter_stone.png"),
     "coal" : pygame.image.load("files/images/inverted_sorter_coal.png"),
+    "iron": pygame.image.load("files/images/inverted_sorter_iron.png"),
+    "copper": pygame.image.load("files/images/inverted_sorter_copper.png"),
 }
 drill_images = {
     "" : pygame.image.load("files/images/drill_null.png"),
     "stone" : pygame.image.load("files/images/drill_stone.png"),
     "coal" : pygame.image.load("files/images/drill_coal.png"),
+    "iron": pygame.image.load("files/images/drill_iron.png"),
+    "copper": pygame.image.load("files/images/drill_copper.png"),
 }
-
+ore_img = {
+    "stone" : pygame.image.load("files/images/stone_ore.png"),
+    "coal" : pygame.image.load("files/images/coal_ore.png"),
+    "iron" : pygame.image.load("files/images/iron_ore.png"),
+    "copper" : pygame.image.load("files/images/copper_ore.png"),
+}
 items = {
     "" : pygame.image.load("files/images/item_null.png"),
     "stone" : pygame.image.load("files/images/item_stone.png"),
     "coal" : pygame.image.load("files/images/item_coal.png"),
+    "iron" : pygame.image.load("files/images/item_iron.png"),
+    "copper": pygame.image.load("files/images/item_copper.png"),
+    "iron bar": pygame.image.load("files/images/item_iron_bar.png"),
+    "copper bar": pygame.image.load("files/images/item_copper_bar.png"),
 }
 
 dig_img = pygame.Surface((16, 16), pygame.SRCALPHA)
