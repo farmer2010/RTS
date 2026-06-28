@@ -30,6 +30,11 @@ class Worker(Unit):
                     self.world.field[x][y].progress -= self.world.field[x][y].mining_speed
                     if self.world.field[x][y].progress <= 0:
                         self.player.task_field[x][y] = 0
+                        for c in blocks.cost[self.world.field[x][y].type]:
+                            if self.world.field[x][y].is_construction:
+                                self.player.resources[c[0]] += math.ceil(c[1] / 2)
+                            else:
+                                self.player.resources[c[0]] += c[1]
                         self.world.field[x][y].remove_block()
                     self.world.chunks[int(x // 16)][int(y // 16)].image_changes = 1
                     return(1)

@@ -37,6 +37,9 @@ inventory_factory_img = pygame.transform.scale(pygame.image.load("files/images/i
 inventory_selection = pygame.transform.scale(pygame.image.load("files/images/inventory_selection.png"), (64, 64))
 inventory_background = get_text_box_image(268, 332, (90, 90, 90))
 
+items_background = pygame.Surface((728, 48), pygame.SRCALPHA)
+items_background.fill((0, 0, 0, 128))
+
 hbbar = [
     pygame.image.load("files/images/hpbar1.png"),
     pygame.image.load("files/images/hpbar2.png"),

@@ -597,6 +597,20 @@ class World(Panel):
                 if self.select_block == bl:
                     screen.blit(inventory_selection, (x - 8, y - 8))
             #
+            screen.blit(items_background, (W/2 - 360, 0))
+            screen.blit(pygame.transform.scale(items["stone"], (48, 48)), (W/2 - 360, 0))
+            render_text(": " + str(self.player.resources["stone"]), (W/2 + 48 - 360, 24), screen, color=(255, 255, 255), font=font, centery="center")
+            screen.blit(pygame.transform.scale(items["coal"], (48, 48)), (W / 2 - 240, 0))
+            render_text(": " + str(self.player.resources["coal"]), (W / 2 + 48 - 240, 24), screen, color=(255, 255, 255), font=font, centery="center")
+            screen.blit(pygame.transform.scale(items["iron"], (48, 48)), (W / 2 - 120, 0))
+            render_text(": " + str(self.player.resources["iron"]), (W / 2 + 48 - 120, 24), screen, color=(255, 255, 255), font=font, centery="center")
+            screen.blit(pygame.transform.scale(items["copper"], (48, 48)), (W / 2, 0))
+            render_text(": " + str(self.player.resources["copper"]), (W / 2 + 48, 24), screen, color=(255, 255, 255), font=font, centery="center")
+            screen.blit(pygame.transform.scale(items["iron bar"], (48, 48)), (W / 2 + 120, 0))
+            render_text(": " + str(self.player.resources["iron bar"]), (W / 2 + 48 + 120, 24), screen, color=(255, 255, 255), font=font, centery="center")
+            screen.blit(pygame.transform.scale(items["copper bar"], (48, 48)), (W / 2 + 240, 0))
+            render_text(": " + str(self.player.resources["copper bar"]), (W / 2 + 48 + 240, 24), screen, color=(255, 255, 255), font=font, centery="center")
+            #
             utils.render_text(str(self.zoom), (0, 25), screen, color=(255, 0, 0))
             utils.render_text(str(d), (0, 50), screen, color=(255, 0, 0))
             utils.render_text(str(self.cam_pos), (0, 75), screen, color=(255, 0, 0))
