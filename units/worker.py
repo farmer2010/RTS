@@ -39,15 +39,22 @@ class Worker(Unit):
                     self.world.chunks[int(x // 16)][int(y // 16)].image_changes = 1
                     return(1)
                 elif self.player.task_field[x][y] != 0:
-                    if self.world.field[x][y].type == "air":
-                        self.world.field[x][y] = blocks.WorkInProgress(self.world, (x, y))
-                    elif self.world.field[x][y].type == "work in progress":
-                        self.world.field[x][y].progress += 1
-                        if self.world.field[x][y].progress >= blocks.build_time[self.player.task_field[x][y][0]]:
-                            blocks.set_block(self.world, (x, y), self.player, self.player.task_field[x][y][0], self.player.task_field[x][y][1])
-                            self.player.task_field[x][y] = 0
-                            self.world.chunks[int(x // 16)][int(y // 16)].image_changes = 1
-                    return(1)
+                    enough = 1
+                    for c in blocks.cost[self.player.task_field[x][y][0]]:
+                        if self.player.resources[c[0]] < c[1]:
+                            enough = 0
+                    if enough:
+                        if self.world.field[x][y].type == "air":
+                            self.world.field[x][y] = blocks.WorkInProgress(self.world, (x, y))
+                        elif self.world.field[x][y].type == "work in progress":
+                            self.world.field[x][y].progress += 1
+                            if self.world.field[x][y].progress >= blocks.build_time[self.player.task_field[x][y][0]]:
+                                blocks.set_block(self.world, (x, y), self.player, self.player.task_field[x][y][0], self.player.task_field[x][y][1])
+                                for c in blocks.cost[self.player.task_field[x][y][0]]:
+                                    self.player.resources[c[0]] -= c[1]
+                                self.player.task_field[x][y] = 0
+                                self.world.chunks[int(x // 16)][int(y // 16)].image_changes = 1
+                        return(1)
         return(0)
 
     def update_task(self):
@@ -72,16 +79,22 @@ class Worker(Unit):
                 #
                 if self.world.test_for_block_pos((x, y)):
                     if self.player.task_field[x][y] != 0 and self.player.task_units[x][y] == None:
-                        f1 = self.world.test_for_block_pos((x, y - 1)) and not self.world.field[x][y - 1].has_hitbox
-                        f2 = self.world.test_for_block_pos((x, y + 1)) and not self.world.field[x][y + 1].has_hitbox
-                        f3 = self.world.test_for_block_pos((x - 1, y)) and not self.world.field[x - 1][y].has_hitbox
-                        f4 = self.world.test_for_block_pos((x + 1, y)) and not self.world.field[x + 1][y].has_hitbox
-                        if f1 or f2 or f3 or f4:
-                            self.move_command((x, y), move_to_close=1)
-                            if self.command != None:
-                                self.world.player.task_units[x][y] = self
-                                self.task = (x, y)
-                                return
+                        enough = 1
+                        if self.player.task_field[x][y] != 1:
+                            for c in blocks.cost[self.player.task_field[x][y][0]]:
+                                if self.player.resources[c[0]] < c[1]:
+                                    enough = 0
+                        if enough:
+                            f1 = self.world.test_for_block_pos((x, y - 1)) and not self.world.field[x][y - 1].has_hitbox
+                            f2 = self.world.test_for_block_pos((x, y + 1)) and not self.world.field[x][y + 1].has_hitbox
+                            f3 = self.world.test_for_block_pos((x - 1, y)) and not self.world.field[x - 1][y].has_hitbox
+                            f4 = self.world.test_for_block_pos((x + 1, y)) and not self.world.field[x + 1][y].has_hitbox
+                            if f1 or f2 or f3 or f4:
+                                self.move_command((x, y), move_to_close=1)
+                                if self.command != None:
+                                    self.world.player.task_units[x][y] = self
+                                    self.task = (x, y)
+                                    return
                 #
             if i % 2 == 1:
                 length += 1
