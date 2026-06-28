@@ -233,6 +233,16 @@ class World(Panel):
                         self.select_rotate = (self.select_rotate + 1) % 4
                     if event.key == pygame.K_m:
                         self.menu = "map"
+                    if event.key == pygame.K_q:
+                        blockpos = [
+                            int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) // (16 * self.zoom)),
+                            int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) // (16 * self.zoom))
+                        ]
+                        if self.test_for_block_pos(blockpos):
+                            if self.field[blockpos[0]][blockpos[1]].is_construction:
+                                self.select_block = self.field[blockpos[0]][blockpos[1]].type
+                            else:
+                                self.select_block = None
                 #
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_f and self.action_type == "units":
@@ -270,7 +280,6 @@ class World(Panel):
                             self.select_block = None
                             x = (W - mousepos[0]) // 64
                             y = (H - mousepos[1]) // 64
-                            print(x, y)
                             if x == 0:
                                 self.page_index = min(max(4 - y, 0), 4)
                             elif x > 0:
@@ -554,6 +563,10 @@ class World(Panel):
                 screen.blit(get_block_image(bl), (x, y))
                 if self.select_block == bl:
                     screen.blit(inventory_selection, (x - 8, y - 8))
+            #
+            if self.test_for_block_pos(blockpos) and self.select_block != None and self.field[blockpos[0]][blockpos[1]].type == "air":
+                if self.player.fog[blockpos[0]][blockpos[1]] != 0:
+                    screen.blit(get_block_preview(self.select_block, rotate=self.select_rotate, zoom=self.zoom), self.game_to_display((blockpos[0] * 16, blockpos[1] * 16)))
             #
             utils.render_text(str(self.zoom), (0, 25), screen, color=(255, 0, 0))
             utils.render_text(str(d), (0, 50), screen, color=(255, 0, 0))
