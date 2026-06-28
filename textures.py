@@ -1,4 +1,5 @@
 import pygame
+from farmgui import *
 
 '''
 цвета предметов:
@@ -26,6 +27,15 @@ selection_img = pygame.image.load("files/images/selection.png")
 white_selection_img = pygame.image.load("files/images/white_selection.png")
 iron_furnace_img = pygame.image.load("files/images/iron_furnace.png")
 copper_furnace_img = pygame.image.load("files/images/copper_furnace.png")
+
+
+inventory_turret_img = pygame.transform.scale(pygame.image.load("files/images/inventory_turret.png"), (64, 64))
+inventory_drill_img = pygame.transform.scale(pygame.image.load("files/images/inventory_drill.png"), (64, 64))
+inventory_conveyor_img = pygame.transform.scale(pygame.image.load("files/images/inventory_conveyor.png"), (64, 64))
+inventory_unit_img = pygame.transform.scale(pygame.image.load("files/images/inventory_unit.png"), (64, 64))
+inventory_factory_img = pygame.transform.scale(pygame.image.load("files/images/inventory_factory.png"), (64, 64))
+inventory_selection = pygame.transform.scale(pygame.image.load("files/images/inventory_selection.png"), (64, 64))
+inventory_background = get_text_box_image(268, 332, (90, 90, 90))
 
 hbbar = [
     pygame.image.load("files/images/hpbar1.png"),

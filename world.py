@@ -13,8 +13,33 @@ H = pygame.display.Info().current_h
 
 font = pygame.font.Font("files/Better VCR 6.1.ttf", 16)
 
+pages = [
+    [
+        "turret"
+    ],
+    [
+        "conveyor",
+        "junction",
+        "router",
+        "sorter",
+        "inverted sorter",
+        "overflow gate",
+        "underflow gate"
+    ],
+    [
+        "drill"
+    ],
+    [
+        "iron furnace",
+        "copper furnace"
+    ],
+    [
+
+    ]
+]
+
 class World(Panel):
-    def __init__(self, w=8, h=8):
+    def __init__(self, w=16, h=16):
         Panel.__init__(self, (0, 0, W, H))
         self.ch_w = w
         self.ch_h = h
@@ -31,7 +56,6 @@ class World(Panel):
         self.zoom_speed = 0
         self.pause = 0
         self.command_index = 0
-        self.set_rotate = 0
         self.steps = 0
         self.menu = "game"
         #
@@ -51,10 +75,15 @@ class World(Panel):
         self.player = self.players[0]#игрок - пользователь
         self.items = []
         #
+        self.page_index = 0
+        self.select_rotate = 0
+        self.select_block = None
+        #
         self.action_type = None
         self.action_pos = [0, 0]
         #
         self.minimap = pygame.Surface((self.w, self.h), pygame.SRCALPHA)
+        self.minimap_background = get_text_box_image(self.w + 18, self.h + 18, (90, 90, 90))
         self.fog_minimap = pygame.Surface((self.w, self.h), pygame.SRCALPHA)
         self.fog_minimap.fill((0, 0, 0))
         self.field = [[Air(self, (x, y)) for y in range(self.h)] for x in range(self.w)]
@@ -124,11 +153,15 @@ class World(Panel):
                 self.zoom_speed = 0
                 wheel = self.input_manager.get_mousewheel()
                 if wheel != 0:
-                    self.zoom_timer = 20
-                    self.zoom_speed = (max(min(self.zoom + wheel, self.max_zoom), self.min_zoom) - self.zoom) / 20
+                    self.zoom_timer = 10
+                    self.zoom_speed = (max(min(self.zoom + wheel, self.max_zoom), self.min_zoom) - self.zoom) / 10
             self.zoom += self.zoom_speed
             if self.zoom_timer > 0:
                 self.zoom_timer -= 1
+            #
+            inv = mousepos[0] >= W - 268 and mousepos[1] >= H - 332
+            mnmp = mousepos[0] >= W - self.w - 18 and mousepos[1] <= self.h + 18
+            on_ui = inv or mnmp
             #
             for event in events:
                 if event.type == pygame.KEYDOWN:
@@ -193,7 +226,7 @@ class World(Panel):
                             self.action_pos = self.display_to_game(mousepos)
                             self.action_type = "clear"
                     if event.key == pygame.K_r:
-                        self.set_rotate = (self.set_rotate + 1) % 4
+                        self.select_rotate = (self.select_rotate + 1) % 4
                     if event.key == pygame.K_m:
                         self.menu = "map"
                 #
@@ -205,7 +238,7 @@ class World(Panel):
                     if event.key == pygame.K_c and self.action_type == "clear":
                         self.action_func()
                 #
-                if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.type == pygame.MOUSEBUTTONDOWN and not on_ui:
                     if event.button == 1 and keys[pygame.K_LSHIFT]:#команда юнитам
                         for obj in self.objects:
                             if obj._class == "unit" and obj.player == self.player and obj in self.player.selected_units:
@@ -226,7 +259,7 @@ class World(Panel):
                                 self.field[blockpos[0]][blockpos[1]].action()
                                 self.chunks[blockpos[0] // 16][blockpos[1] // 16].update_image()
             #
-            if pygame.mouse.get_pressed()[0] and not keys[pygame.K_LSHIFT]:#установка
+            if pygame.mouse.get_pressed()[0] and not keys[pygame.K_LSHIFT] and not on_ui:#установка
                 blockpos = [
                     int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) // (16 * self.zoom)),
                     int((self.cam_pos[1] * self.zoom - self.display_H / 2 + mousepos[1]) // (16 * self.zoom))
@@ -234,7 +267,7 @@ class World(Panel):
                 if self.test_for_block_pos(blockpos):
                     if self.field[blockpos[0]][blockpos[1]].type == "air":
                         if keys[pygame.K_KP0]:
-                            set_block(self, blockpos, self.players[self.pl_ind], "conveyor", rotate=self.set_rotate)
+                            set_block(self, blockpos, self.players[self.pl_ind], "conveyor", rotate=self.select_rotate)
                         elif keys[pygame.K_KP1]:
                             set_block(self, blockpos, self.players[self.pl_ind], "router")
                         elif keys[pygame.K_KP2]:
@@ -275,7 +308,7 @@ class World(Panel):
                             set_block(self, blockpos, None, "stone")
                         self.chunks[blockpos[0] // 16][blockpos[1] // 16].update_image()
             #
-            if pygame.mouse.get_pressed()[2]:#ломание
+            if pygame.mouse.get_pressed()[2] and not on_ui:#ломание
                 self.action_type = None
                 blockpos = [
                     int((self.cam_pos[0] * self.zoom - self.display_W / 2 + mousepos[0]) // (16 * self.zoom)),
@@ -495,17 +528,25 @@ class World(Panel):
                     screen.blit(img, (min(pos[0], corn_pos[0]),
                                       min(pos[1], corn_pos[1])))
             #
-            pygame.draw.rect(screen, (90, 90, 90), (self.display_W - self.w - 4, 0, self.w + 4, self.h + 4))
-            screen.blit(self.minimap, (self.display_W - self.w - 2, 2))
-            screen.blit(self.fog_minimap, (self.display_W - self.w - 2, 2))
-            pos1 = [max((self.cam_pos[0] - W / self.zoom / 2) // 16, 0), min((self.cam_pos[1] - H / self.zoom / 2) // 16, self.h)]#левый верхний
-            pos2 = [max((self.cam_pos[0] + W / self.zoom / 2) // 16, 0), min((self.cam_pos[1] - H / self.zoom / 2) // 16, self.h)]#правый верхний
-            pos3 = [max((self.cam_pos[0] - W / self.zoom / 2) // 16, 0), min((self.cam_pos[1] + H / self.zoom / 2) // 16, self.h)]#левый нижний
-            pos4 = [max((self.cam_pos[0] + W / self.zoom / 2) // 16, 0), min((self.cam_pos[1] + H / self.zoom / 2) // 16, self.h)]#правый нижний
-            pygame.draw.rect(screen, (255, 190, 0), (W - self.w - 4 + pos1[0], pos1[1], pos2[0] - pos1[0], 2))
-            pygame.draw.rect(screen, (255, 190, 0), (W - self.w - 4 + pos3[0], pos3[1], pos4[0] - pos3[0], 2))
-            pygame.draw.rect(screen, (255, 190, 0), (W - self.w - 4 + pos1[0], pos1[1], 2, pos3[1] - pos1[1]))
-            pygame.draw.rect(screen, (255, 190, 0), (W - self.w - 4 + pos2[0], pos2[1], 2, pos4[1] - pos2[1] + 2))
+            screen.blit(self.minimap_background, (W - self.w - 18, 0))
+            screen.blit(self.minimap, (self.display_W - self.w - 9, 9))
+            screen.blit(self.fog_minimap, (self.display_W - self.w - 9, 9))
+            pos1 = [min(max((self.cam_pos[0] - W / self.zoom / 2) // 16, 0), self.w - 2), max(min((self.cam_pos[1] - H / self.zoom / 2) // 16, self.h - 2), 0)]#левый верхний
+            pos2 = [min(max((self.cam_pos[0] + W / self.zoom / 2) // 16, 0), self.w - 2), max(min((self.cam_pos[1] - H / self.zoom / 2) // 16, self.h - 2), 0)]#правый верхний
+            pos3 = [min(max((self.cam_pos[0] - W / self.zoom / 2) // 16, 0), self.w - 2), max(min((self.cam_pos[1] + H / self.zoom / 2) // 16, self.h - 2), 0)]#левый нижний
+            pos4 = [min(max((self.cam_pos[0] + W / self.zoom / 2) // 16, 0), self.w - 2), max(min((self.cam_pos[1] + H / self.zoom / 2) // 16, self.h - 2), 0)]#правый нижний
+            pygame.draw.rect(screen, (255, 190, 0), (W - self.w - 9 + pos1[0], pos1[1] + 9, pos2[0] - pos1[0], 2))
+            pygame.draw.rect(screen, (255, 190, 0), (W - self.w - 9 + pos3[0], pos3[1] + 9, pos4[0] - pos3[0], 2))
+            pygame.draw.rect(screen, (255, 190, 0), (W - self.w - 9 + pos1[0], pos1[1] + 9, 2, pos3[1] - pos1[1]))
+            pygame.draw.rect(screen, (255, 190, 0), (W - self.w - 9 + pos2[0], pos2[1] + 9, 2, pos4[1] - pos2[1] + 2))
+            #
+            screen.blit(inventory_background, (W - 268, H - 332))
+            #pygame.draw.rect(screen, (90, 90, 90), (W - 320, H - 256, 320, 256))
+            screen.blit(inventory_turret_img, (W - 64 - 6, H - 320 - 6))
+            screen.blit(inventory_conveyor_img, (W - 64 - 6, H - 256 - 6))
+            screen.blit(inventory_drill_img, (W - 64 - 6, H - 192 - 6))
+            screen.blit(inventory_factory_img, (W - 64 - 6, H - 128 - 6))
+            screen.blit(inventory_unit_img, (W - 64 - 6, H - 64 - 6))
             #
             utils.render_text(str(self.zoom), (0, 25), screen, color=(255, 0, 0))
             utils.render_text(str(d), (0, 50), screen, color=(255, 0, 0))
