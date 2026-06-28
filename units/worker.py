@@ -46,7 +46,7 @@ class Worker(Unit):
                     if enough:
                         if self.world.field[x][y].type == "air":
                             self.world.field[x][y] = blocks.WorkInProgress(self.world, (x, y))
-                        elif self.world.field[x][y].type == "work in progress":
+                        elif self.world.field[x][y].type == "work in progress" and len(self.world.unit_field[x][y]) == 0:
                             self.world.field[x][y].progress += 1
                             if self.world.field[x][y].progress >= blocks.build_time[self.player.task_field[x][y][0]]:
                                 blocks.set_block(self.world, (x, y), self.player, self.player.task_field[x][y][0], self.player.task_field[x][y][1])
@@ -84,7 +84,7 @@ class Worker(Unit):
                             for c in blocks.cost[self.player.task_field[x][y][0]]:
                                 if self.player.resources[c[0]] < c[1]:
                                     enough = 0
-                        if enough:
+                        if enough and len(self.world.unit_field[x][y]) == 0:
                             f1 = self.world.test_for_block_pos((x, y - 1)) and not self.world.field[x][y - 1].has_hitbox
                             f2 = self.world.test_for_block_pos((x, y + 1)) and not self.world.field[x][y + 1].has_hitbox
                             f3 = self.world.test_for_block_pos((x - 1, y)) and not self.world.field[x - 1][y].has_hitbox
