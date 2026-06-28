@@ -1,4 +1,4 @@
-class DrillUnit():
+class FactoryUnit():
     def __init__(self, world, player, block):
         self._class = "factory unit"
         self.world = world

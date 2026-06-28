@@ -6,7 +6,12 @@ class DrillUnit():
         self.drill = drill
 
     def update(self, events):
-        if self.drill.config != "":
+        if self.drill.items > 0:
+            itm = [self.drill.config, self.drill]
+            if self.drill.set_item(itm):
+                self.world.items.append(itm)
+                self.drill.items -= 1
+        if self.drill.has_ore:
             self.drill.timer += 1
             if self.drill.timer >= self.drill.mine_speed[self.drill.config]:
                 self.drill.timer = 0
@@ -21,12 +26,11 @@ class DrillUnit():
                             self.drill.items += 1
                             bl[1] -= 1
                     else:
-                        self.drill.config = ""
+                        self.drill.has_ore = 0
                         self.world.ore_field[self.drill.pos[0]][self.drill.pos[1]] = None
                         self.world.chunks[int(self.drill.pos[0] / 16)][int(self.drill.pos[1] / 16)].image_changes = 1
                 else:
-                    self.drill.config = ""
-
+                    self.drill.has_ore = 0
 
     def draw(self, screen):
         pass

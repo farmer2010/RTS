@@ -429,8 +429,14 @@ class World(Panel):
             if self.test_for_block_pos(blockpos):
                 bl = self.field[blockpos[0]][blockpos[1]]
                 if bl.player == self.player:
-                    if bl.type == "sorter" or bl.type == "inverted sorter" or bl.type == "drill":
+                    if bl.type == "sorter" or bl.type == "inverted sorter":
                         img = pygame.transform.scale(items[bl.config], (16 * self.zoom, 16 * self.zoom))
+                        screen.blit(img, self.game_to_display([bl.pos[0] * 16, bl.pos[1] * 16 - 16]))
+                    if bl.type == "drill":
+                        if bl.has_ore:
+                            img = pygame.transform.scale(items[bl.config], (16 * self.zoom, 16 * self.zoom))
+                        else:
+                            img = pygame.transform.scale(items[""], (16 * self.zoom, 16 * self.zoom))
                         screen.blit(img, self.game_to_display([bl.pos[0] * 16, bl.pos[1] * 16 - 16]))
                     if bl.is_construction:
                         img = pygame.transform.scale(hbbar[int(10 - bl.health / bl.max_health * 10)], (16 * self.zoom, 16 * self.zoom))

@@ -8,11 +8,13 @@ class Drill(Block):
         Block.__init__(self, world, type, pos, player=player)
         self.item = None
         self.config = ""
+        self.has_ore = 0
         self.timer = 0
         self.items = 0
         ore = self.world.ore_field[self.pos[0]][self.pos[1]]
         if ore != None:
             self.config = ore[0]
+            self.has_ore = 1
         if self.type == "drill":
             self.mine_speed = {
                 "stone" : 120,
