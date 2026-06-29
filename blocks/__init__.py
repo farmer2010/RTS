@@ -202,7 +202,7 @@ build_time = {
     "inverted sorter" : 10,
     "overflow gate" : 10,
     "underflow gate" : 10,
-    "stone wall" : 120,
+    "stone wall" : 120,#120
     "iron wall" : 220,
     "stone turret" : 600,
     "iron furnace" : 180,

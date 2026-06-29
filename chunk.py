@@ -71,6 +71,8 @@ class Chunk():
             img.blit(dig_img, (0, 0))
         elif ts != 0:
             img.blit(get_block_preview(ts[0], rotate=ts[1]))
+        #if len(self.world.unit_field[pos[0]][pos[1]]) > 0:
+        #    pygame.draw.rect(img, (0, 255, 0), (0, 0, 5, 5))
         return(img)
 
     def redraw_block(self, pos):
