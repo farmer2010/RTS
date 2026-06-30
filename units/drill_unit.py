@@ -4,6 +4,8 @@ class DrillUnit():
         self.world = world
         self.player = player
         self.drill = drill
+        self.w, self.h = 12, 12
+        self.pos = [self.drill.pos[0] * 16 + 8, self.drill.pos[1] * 16 + 8]
 
     def update(self, events):
         if self.drill.items > 0:

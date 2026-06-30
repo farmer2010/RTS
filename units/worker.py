@@ -27,8 +27,9 @@ class Worker(Unit):
             x, y = pos[0] + self.movelist8[i][0], pos[1] + self.movelist8[i][1]
             if self.world.test_for_block_pos((x, y)):
                 if self.player.task_field[x][y] == 1:
-                    self.world.field[x][y].progress -= self.world.field[x][y].mining_speed
-                    if self.world.field[x][y].progress <= 0:
+                    self.world.field[x][y].progress += 1
+                    #print(self.world.field[x][y].type)
+                    if self.world.field[x][y].progress >= blocks.build_time[self.world.field[x][y].type]:
                         self.player.task_field[x][y] = 0
                         for c in blocks.cost[self.world.field[x][y].type]:
                             if self.world.field[x][y].is_construction:

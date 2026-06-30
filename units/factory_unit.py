@@ -4,6 +4,8 @@ class FactoryUnit():
         self.world = world
         self.player = player
         self.block = block
+        self.w, self.h = 12, 12
+        self.pos = [self.block.pos[0] * 16 + 8, self.block.pos[1] * 16 + 8]
 
     def update(self, events):
         if self.block.items[self.block.recipe["result"][0]] > 0 and self.block.item == None:

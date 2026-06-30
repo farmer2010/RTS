@@ -20,6 +20,7 @@ from blocks.factory import *
 from blocks.work_in_progress import *
 from blocks.ore import *
 from blocks.sandy_water import *
+from blocks.core import *
 
 def set_block(world, pos, player, type, rotate=0):
     if world.field[pos[0]][pos[1]].type == "air" or world.field[pos[0]][pos[1]].type == "work in progress":
