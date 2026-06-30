@@ -62,10 +62,9 @@ class Chunk():
         img.blit(bl.get_image(), (0, 0))
         if bl.player is self.world.players[1]:
             img.blit(enemy_edge_img, (0, 0))
-        if bl.type != "work in progress":
-            pr = int((1000 - bl.progress) // 170)
-            if pr > 0:
-                img.blit(crack[pr - 1], (0, 0))
+        if bl.type != "work in progress" and bl.progress != 0:
+            pr = int(bl.progress / build_time[bl.type] * 5)
+            img.blit(crack[pr], (0, 0))
         ts = self.world.player.task_field[pos[0]][pos[1]]
         if ts == 1:
             img.blit(dig_img, (0, 0))

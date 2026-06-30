@@ -1,12 +1,10 @@
 import pygame
-from pygame.constants import MOUSEBUTTONUP
-
 from farmgui import *
 from blocks import *
 from chunk import *
 from random import randint as rand
 from units import *
-import opensimplex
+from opensimplex import *
 import math
 from players import *
 
@@ -14,6 +12,74 @@ W = pygame.display.Info().current_w
 H = pygame.display.Info().current_h
 
 font = pygame.font.Font("files/Better VCR 6.1.ttf", 16)
+
+landscape = [#0.032 1.0 1 0.097 0.503 1 0.509 0.065 0.672 0.845 1.067 1.404
+    [#octave 1
+        0.032,
+        1.0
+    ],
+    [#octave 2
+        0.097,
+        0.503
+    ],
+    [#octave 3
+        0.509,
+        0.065
+    ],
+    [
+        -0.328,#water
+        -0.155,#sand water
+        0.067,#sand
+        0.404#grass
+    ]
+]
+ore = [#0.039 0.426 1 0.382 0.792 1.28 1.162
+    [#stone
+
+    ],
+    [#coal
+        [
+            0.039,#octave 1
+            0.426
+        ],
+        [
+            0.382,#octave 2
+            0.792
+        ],
+        [
+            0.28,#vein level
+            0.162#cluster level
+        ]
+    ],#0.045 0.51 1 0.163 0.447 1.131 1.192
+    [#iron
+        [
+            0.045,#octave 1
+            0.51
+        ],
+        [
+            0.163,#octave 2
+            0.447
+        ],
+        [
+            0.131,#vein level
+            0.192#cluster level
+        ]
+    ],#0.02 0.752 1 1.0 0.768 1.155 1.298
+    [#copper
+        [
+            0.02,#octave 1
+            0.752
+        ],
+        [
+            1.0,#octave 2
+            0.768
+        ],
+        [
+            0.155,#vein level
+            0.298#cluster level
+        ]
+    ],
+]
 
 pages = [
     [
@@ -94,21 +160,41 @@ class World(Panel):
         self.ground_field = [[Air(self, (x, y)) for y in range(self.h)] for x in range(self.w)]
         self.ore_field = [[None for y in range(self.h)] for x in range(self.w)]
         self.unit_field = [[[] for y in range(self.w)] for x in range(self.h)]
-        opensimplex.seed(rand(0, 999999999999))
+        land_oct1 = OpenSimplex(seed=rand(-9999999999, 9999999999))
+        land_oct2 = OpenSimplex(seed=rand(-9999999999, 9999999999))
+        land_oct3 = OpenSimplex(seed=rand(-9999999999, 9999999999))
+        coal_oct1 = OpenSimplex(seed=rand(-9999999999, 9999999999))
+        coal_oct2 = OpenSimplex(seed=rand(-9999999999, 9999999999))
         for x in range(self.w):
             for y in range(self.h):
-                f = opensimplex.noise2(x / 30, y / 30)
-                self.ground_field[x][y] = Grass(self, (x, y))
-                if f > 0.5:
-                    self.field[x][y] = Stone(self, (x, y))
-                    self.ground_field[x][y] = StoneFloor(self, (x, y))
-                elif f > -0.1:
-                    self.field[x][y] = Air(self, (x, y))
-                elif f > -0.25:
-                    self.field[x][y] = Air(self, (x, y))
-                    self.ground_field[x][y] = Sand(self, (x, y))
-                else:
+                noise = land_oct1.noise2(x * landscape[0][0], y * landscape[0][0]) * landscape[0][1]
+                noise += land_oct2.noise2(x * landscape[1][0], y * landscape[1][0]) * landscape[1][1]
+                noise += land_oct3.noise2(x * landscape[2][0], y * landscape[2][0]) * landscape[2][1]
+                if noise < landscape[3][0]:#water
                     self.field[x][y] = Water(self, (x, y))
+                    self.ground_field[x][y] = Grass(self, (x, y))
+                elif noise < landscape[3][1]:#sand water
+                    self.field[x][y] = Water(self, (x, y))
+                    self.ground_field[x][y] = Grass(self, (x, y))
+                    #self.field[x][y] = Air(self, (x, y))
+                elif noise < landscape[3][2]:#sand
+                    self.ground_field[x][y] = Sand(self, (x, y))
+                    self.field[x][y] = Air(self, (x, y))
+                elif noise < landscape[3][3]:#grass
+                    self.ground_field[x][y] = Grass(self, (x, y))
+                    self.field[x][y] = Air(self, (x, y))
+                else:#stone
+                    self.ground_field[x][y] = StoneFloor(self, (x, y))
+                    self.field[x][y] = Stone(self, (x, y))
+                #
+                coal_cluster_noise = coal_oct1.noise2(x * ore[1][0][0], y * ore[1][0][0]) * ore[1][0][1]
+                coal_vein_noise = coal_oct2.noise2(x * ore[1][1][0], y * ore[1][1][0]) * ore[1][1][1]
+                if coal_cluster_noise > ore[1][2][1] and coal_vein_noise > ore[1][2][0]:
+                    if self.field[x][y].type == "air" and (self.ground_field[x][y].type == "grass" or self.ground_field[x][y].type == "sand"):
+                        self.ore_field[x][y] = ["coal", int(coal_vein_noise * 100)]
+                    elif self.field[x][y].type == "stone":
+                        self.field[x][y] = Ore(self, (x, y), "coal ore")
+                #
                 self.update_minimap((x, y))
         self.chunks = [[Chunk(self, (x, y)) for y in range(self.ch_w)] for x in range(self.ch_h)]
 
@@ -158,7 +244,7 @@ class World(Panel):
                 wheel = self.input_manager.get_mousewheel()
                 if wheel != 0:
                     self.zoom_timer = 10
-                    self.zoom_speed = (max(min(self.zoom + wheel, self.max_zoom), self.min_zoom) - self.zoom) / 10
+                    self.zoom_speed = (max(min(self.zoom + wheel/abs(wheel), self.max_zoom), self.min_zoom) - self.zoom) / 10
             self.zoom += self.zoom_speed
             if self.zoom_timer > 0:
                 self.zoom_timer -= 1
@@ -288,7 +374,7 @@ class World(Panel):
                         self.action_type = "remove all"
                         self.select_block = None
                         self.action_pos = self.display_to_game(mousepos)
-                if event.type == MOUSEBUTTONUP:
+                if event.type == pygame.MOUSEBUTTONUP:
                     if event.button == 1:
                         if inv:
                             self.select_block = None
@@ -315,7 +401,13 @@ class World(Panel):
                     if self.field[blockpos[0]][blockpos[1]].type == "air":
                         tp = self.select_block if self.select_block != None else "stone"
                         pl = self.players[self.pl_ind] if self.select_block != None else None
-                        if keys[pygame.K_KP_DIVIDE]:
+                        if keys[pygame.K_KP0]:
+                            set_block(self, blockpos, None, "coal ore")
+                        elif keys[pygame.K_KP1]:
+                            set_block(self, blockpos, None, "iron ore")
+                        elif keys[pygame.K_KP2]:
+                            set_block(self, blockpos, None, "copper ore")
+                        elif keys[pygame.K_KP_DIVIDE]:
                             self.field[blockpos[0]][blockpos[1]] = ItemVacuum(self, blockpos)
                         elif keys[pygame.K_INSERT]:
                             self.ore_field[blockpos[0]][blockpos[1]] = ["stone", 10]
@@ -527,10 +619,10 @@ class World(Panel):
             for obj in self.objects:
                 obj.draw(screen)
             #
-            for x in range(int(self.cam_pos[0] / 256 - count[0] / 2), int(self.cam_pos[0] / 256 + count[0] / 2) + 1):#туман войны
+            '''for x in range(int(self.cam_pos[0] / 256 - count[0] / 2), int(self.cam_pos[0] / 256 + count[0] / 2) + 1):#туман войны
                 for y in range(int(self.cam_pos[1] / 256 - count[1] / 2), int(self.cam_pos[1] / 256 + count[1] / 2) + 1):
                     if x >= 0 and x < self.ch_w and y >= 0 and y < self.ch_h:
-                        screen.blit(self.chunks[x][y].scaled_fog_image, self.game_to_display((x * 256, y * 256)))
+                        screen.blit(self.chunks[x][y].scaled_fog_image, self.game_to_display((x * 256, y * 256)))'''
             #
             if self.action_type != None:
                 pos = self.game_to_display(self.action_pos)

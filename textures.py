@@ -27,6 +27,9 @@ selection_img = pygame.image.load("files/images/selection.png")
 white_selection_img = pygame.image.load("files/images/white_selection.png")
 iron_furnace_img = pygame.image.load("files/images/iron_furnace.png")
 copper_furnace_img = pygame.image.load("files/images/copper_furnace.png")
+block_coal_ore_img = pygame.image.load("files/images/block_coal_ore.png")
+block_iron_ore_img = pygame.image.load("files/images/block_iron_ore.png")
+block_copper_ore_img = pygame.image.load("files/images/block_copper_ore.png")
 
 
 inventory_turret_img = pygame.transform.scale(pygame.image.load("files/images/inventory_turret.png"), (64, 64))
