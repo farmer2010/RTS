@@ -126,7 +126,7 @@ pages = [
 ]
 
 class World(Panel):
-    def __init__(self, w=16, h=16):
+    def __init__(self, w=5, h=5):
         Panel.__init__(self, (0, 0, W, H))
         self.ch_w = w
         self.ch_h = h
@@ -197,9 +197,8 @@ class World(Panel):
                     self.field[x][y] = Water(self, (x, y))
                     self.ground_field[x][y] = Grass(self, (x, y))
                 elif noise < landscape[3][1]:#sand water
-                    self.field[x][y] = Water(self, (x, y))
-                    self.ground_field[x][y] = Grass(self, (x, y))
-                    #self.field[x][y] = Air(self, (x, y))
+                    self.ground_field[x][y] = SandyWater(self, (x, y))
+                    self.field[x][y] = Air(self, (x, y))
                 elif noise < landscape[3][2]:#sand
                     self.ground_field[x][y] = Sand(self, (x, y))
                     self.field[x][y] = Air(self, (x, y))

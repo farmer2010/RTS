@@ -18,11 +18,19 @@ from blocks.stone_floor import *
 from blocks.drill import *
 from blocks.factory import *
 from blocks.work_in_progress import *
+from blocks.ore import *
+from blocks.sandy_water import *
 
 def set_block(world, pos, player, type, rotate=0):
     if world.field[pos[0]][pos[1]].type == "air" or world.field[pos[0]][pos[1]].type == "work in progress":
         if type == "stone":
             world.field[pos[0]][pos[1]] = Stone(world, pos)
+        elif type == "coal ore":
+            world.field[pos[0]][pos[1]] = Ore(world, pos, "coal ore")
+        elif type == "iron ore":
+            world.field[pos[0]][pos[1]] = Ore(world, pos, "iron ore")
+        elif type == "copper ore":
+            world.field[pos[0]][pos[1]] = Ore(world, pos, "copper ore")
         elif type == "water":
             world.field[pos[0]][pos[1]] = Water(world, pos)
         elif type == "conveyor":
@@ -139,6 +147,10 @@ cost = {
     "stone" : [
         ["stone", 3]
     ],
+    "coal ore" : [
+        ["stone", 2],
+        ["coal", 2]
+    ],
     "iron ore" : [
         ["stone", 2],
         ["iron", 2]
@@ -174,11 +186,19 @@ cost = {
         ["iron", 2],
         ["copper", 1]
     ],
+    "drill" : [
+        ["stone", 12],
+        ["iron ore", 8],
+        ["copper ore", 5]
+    ],
     "stone wall": [
         ["stone", 25],
     ],
     "iron wall": [
-        ["iron bar", 20],
+        ["iron bar", 25],
+    ],
+    "steel wall": [
+        ["steel", 25],
     ],
     "stone turret": [
         ["stone", 40],
@@ -186,15 +206,21 @@ cost = {
     ],
     "iron furnace": [
         ["stone", 30],
-        ["iron", 15]
+        ["iron", 15],
+        ["copper", 10]
     ],
     "copper furnace": [
         ["stone", 30],
+        ["iron", 10],
         ["copper", 15]
     ],
 }
 
 build_time = {
+    "stone" : 70,
+    "coal ore" : 120,
+    "iron ore" : 120,
+    "copper ore": 120,
     "conveyor" : 5,
     "router" : 5,
     "junction" : 5,
@@ -202,6 +228,7 @@ build_time = {
     "inverted sorter" : 10,
     "overflow gate" : 10,
     "underflow gate" : 10,
+    "drill" : 40,
     "stone wall" : 120,#120
     "iron wall" : 220,
     "stone turret" : 600,

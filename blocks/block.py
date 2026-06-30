@@ -11,8 +11,7 @@ class Block():
         self.pos = pos
         self.image = pygame.Surface((16, 16))
         self.has_hitbox = 1
-        self.progress = 1000#прогресс ломания
-        self.mining_speed = 50
+        self.progress = 0#прогресс ломания
         self.speed = 1
         self.can_mined = 0
         self.health = health
