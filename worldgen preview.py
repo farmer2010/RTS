@@ -213,9 +213,9 @@ def generate(f1, a1, f2, a2, f3, a3):
             #field[x][y] = 1
             if ore_noise2 > slider15.get_value() - 1 and ore_noise1 > slider16.get_value() - 1:
                 if field[x][y] == 0 or field[x][y] == 3:
-                    ore[x][y] = 3
+                    ore[x][y] = 1
                 elif field[x][y] == 1:
-                    field[x][y] = 7
+                    field[x][y] = 5
             #
             if field[x][y] == 0:#grass
                 pygame.draw.rect(img, (0, 167, 0), (x, y, 1, 1))

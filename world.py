@@ -13,9 +13,9 @@ H = pygame.display.Info().current_h
 
 font = pygame.font.Font("files/Better VCR 6.1.ttf", 16)
 
-landscape = [#0.032 1.0 1 0.097 0.503 1 0.509 0.065 0.672 0.845 1.067 1.404
+landscape = [#0.029 1.0 1 0.097 0.503 1 0.509 0.065 0.672 0.845 1.067 1.404
     [#octave 1
-        0.032,
+        0.029,
         1.0
     ],
     [#octave 2
@@ -33,13 +33,24 @@ landscape = [#0.032 1.0 1 0.097 0.503 1 0.509 0.065 0.672 0.845 1.067 1.404
         0.404#grass
     ]
 ]
-ore = [#0.039 0.426 1 0.382 0.792 1.28 1.162
+ore = [#0.076 0.45 1 0.163 0.447 1.131 1.243
     [#stone
-
-    ],
+        [
+            0.076,#octave 1
+            0.45
+        ],
+        [
+            0.163,#octave 2
+            0.447
+        ],
+        [
+            0.131,#vein level
+            0.243#cluster level
+        ]
+    ],#0.064 0.426 1 0.382 0.792 1.28 1.255
     [#coal
         [
-            0.039,#octave 1
+            0.064,#octave 1
             0.426
         ],
         [
@@ -48,26 +59,26 @@ ore = [#0.039 0.426 1 0.382 0.792 1.28 1.162
         ],
         [
             0.28,#vein level
-            0.162#cluster level
+            0.255#cluster level
         ]
-    ],#0.045 0.51 1 0.163 0.447 1.131 1.192
+    ],#0.033 0.45 1 0.163 0.447 1.112 1.243
     [#iron
         [
-            0.045,#octave 1
-            0.51
+            0.034,#octave 1
+            0.45
         ],
         [
             0.163,#octave 2
             0.447
         ],
         [
-            0.131,#vein level
-            0.192#cluster level
+            0.14,#vein level
+            0.243#cluster level
         ]
-    ],#0.02 0.752 1 1.0 0.768 1.155 1.298
+    ],#0.029 0.752 1 1.0 0.768 1.155 1.48
     [#copper
         [
-            0.02,#octave 1
+            0.029,#octave 1
             0.752
         ],
         [
@@ -76,9 +87,15 @@ ore = [#0.039 0.426 1 0.382 0.792 1.28 1.162
         ],
         [
             0.155,#vein level
-            0.298#cluster level
+            0.48#cluster level
         ]
     ],
+]
+ore_id = [
+    "stone ore",
+    "coal ore",
+    "iron ore",
+    "copper ore"
 ]
 
 pages = [
@@ -109,7 +126,7 @@ pages = [
 ]
 
 class World(Panel):
-    def __init__(self, w=8, h=8):
+    def __init__(self, w=16, h=16):
         Panel.__init__(self, (0, 0, W, H))
         self.ch_w = w
         self.ch_h = h
@@ -163,8 +180,14 @@ class World(Panel):
         land_oct1 = OpenSimplex(seed=rand(-9999999999, 9999999999))
         land_oct2 = OpenSimplex(seed=rand(-9999999999, 9999999999))
         land_oct3 = OpenSimplex(seed=rand(-9999999999, 9999999999))
+        stone_oct1 = OpenSimplex(seed=rand(-9999999999, 9999999999))
+        stone_oct2 = OpenSimplex(seed=rand(-9999999999, 9999999999))
         coal_oct1 = OpenSimplex(seed=rand(-9999999999, 9999999999))
         coal_oct2 = OpenSimplex(seed=rand(-9999999999, 9999999999))
+        iron_oct1 = OpenSimplex(seed=rand(-9999999999, 9999999999))
+        iron_oct2 = OpenSimplex(seed=rand(-9999999999, 9999999999))
+        copper_oct1 = OpenSimplex(seed=rand(-9999999999, 9999999999))
+        copper_oct2 = OpenSimplex(seed=rand(-9999999999, 9999999999))
         for x in range(self.w):
             for y in range(self.h):
                 noise = land_oct1.noise2(x * landscape[0][0], y * landscape[0][0]) * landscape[0][1]
@@ -187,13 +210,36 @@ class World(Panel):
                     self.ground_field[x][y] = StoneFloor(self, (x, y))
                     self.field[x][y] = Stone(self, (x, y))
                 #
+                #
+                stone_cluster_noise = stone_oct1.noise2(x * ore[0][0][0], y * ore[0][0][0]) * ore[0][0][1]
+                stone_vein_noise = stone_oct2.noise2(x * ore[0][1][0], y * ore[0][1][0]) * ore[0][1][1]
+                if stone_cluster_noise > ore[0][2][1] and stone_vein_noise > ore[0][2][0]:
+                    if self.field[x][y].type == "air" and (self.ground_field[x][y].type == "grass" or self.ground_field[x][y].type == "sand"):
+                        self.ore_field[x][y] = ["stone", int(stone_vein_noise * 320)]
+                #
                 coal_cluster_noise = coal_oct1.noise2(x * ore[1][0][0], y * ore[1][0][0]) * ore[1][0][1]
                 coal_vein_noise = coal_oct2.noise2(x * ore[1][1][0], y * ore[1][1][0]) * ore[1][1][1]
                 if coal_cluster_noise > ore[1][2][1] and coal_vein_noise > ore[1][2][0]:
                     if self.field[x][y].type == "air" and (self.ground_field[x][y].type == "grass" or self.ground_field[x][y].type == "sand"):
-                        self.ore_field[x][y] = ["coal", int(coal_vein_noise * 100)]
+                        self.ore_field[x][y] = ["coal", int(coal_vein_noise * 130)]
                     elif self.field[x][y].type == "stone":
                         self.field[x][y] = Ore(self, (x, y), "coal ore")
+                #
+                iron_cluster_noise = iron_oct1.noise2(x * ore[2][0][0], y * ore[2][0][0]) * ore[2][0][1]
+                iron_vein_noise = iron_oct2.noise2(x * ore[2][1][0], y * ore[2][1][0]) * ore[2][1][1]
+                if iron_cluster_noise > ore[2][2][1] and iron_vein_noise > ore[2][2][0]:
+                    if self.field[x][y].type == "air" and (self.ground_field[x][y].type == "grass" or self.ground_field[x][y].type == "sand"):
+                        self.ore_field[x][y] = ["iron", int(iron_vein_noise * 250)]
+                    elif self.field[x][y].type == "stone":
+                        self.field[x][y] = Ore(self, (x, y), "iron ore")
+                #
+                copper_cluster_noise = copper_oct1.noise2(x * ore[3][0][0], y * ore[3][0][0]) * ore[3][0][1]
+                copper_vein_noise = copper_oct2.noise2(x * ore[3][1][0], y * ore[3][1][0]) * ore[3][1][1]
+                if copper_cluster_noise > ore[3][2][1] and copper_vein_noise > ore[3][2][0]:
+                    if self.field[x][y].type == "air" and (self.ground_field[x][y].type == "grass" or self.ground_field[x][y].type == "sand"):
+                        self.ore_field[x][y] = ["copper", int(copper_vein_noise * 150)]
+                    elif self.field[x][y].type == "stone":
+                        self.field[x][y] = Ore(self, (x, y), "copper ore")
                 #
                 self.update_minimap((x, y))
         self.chunks = [[Chunk(self, (x, y)) for y in range(self.ch_w)] for x in range(self.ch_h)]
